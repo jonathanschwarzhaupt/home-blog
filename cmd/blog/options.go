@@ -13,6 +13,9 @@ type options struct {
 	dbMinConns     int
 	dbMaxConnLife  time.Duration
 	dbMaxIdleTime  time.Duration
+	limiterRPS     float64
+	limiterBurst   int
+	limiterEnabled bool
 	displayVersion bool
 }
 
@@ -25,6 +28,9 @@ func parseOptions() *options {
 	flag.IntVar(&opts.dbMinConns, "db-min-conns", 5, "PostgreSQL min/idle connections")
 	flag.DurationVar(&opts.dbMaxConnLife, "db-max-conn-lifetime", time.Hour, "PostgreSQL max connection lifetime")
 	flag.DurationVar(&opts.dbMaxIdleTime, "db-max-idle-time", 15*time.Minute, "PostgreSQL max connection idle time")
+	flag.Float64Var(&opts.limiterRPS, "limiter-rps", 2, "Rate limiter requests-per-second per client")
+	flag.IntVar(&opts.limiterBurst, "limiter-burst", 4, "Rate limiter burst size per client")
+	flag.BoolVar(&opts.limiterEnabled, "limiter-enabled", true, "Enable rate limiting")
 	flag.BoolVar(&opts.displayVersion, "version", false, "Display version and exit")
 
 	flag.Parse()

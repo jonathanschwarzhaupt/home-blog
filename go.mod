@@ -10,6 +10,7 @@ require (
 	github.com/jackc/pgx/v5 v5.10.0
 	github.com/justinas/alice v1.2.0
 	github.com/pressly/goose/v3 v3.27.2
+	golang.org/x/time v0.15.0
 )
 
 require (

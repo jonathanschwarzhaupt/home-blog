@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/jonathanschwarzhaupt/my-blog/internal/database"
 	"github.com/jonathanschwarzhaupt/my-blog/internal/models"
@@ -14,8 +15,9 @@ import (
 )
 
 type application struct {
-	logger *slog.Logger
-	db     database.Querier
+	logger  *slog.Logger
+	db      database.Querier
+	limiter *rateLimiter
 }
 
 func main() {
@@ -43,9 +45,13 @@ func main() {
 	}
 	defer pool.Close()
 
+	limiter := newRateLimiter(opts.limiterRPS, opts.limiterBurst, opts.limiterEnabled)
+	limiter.startCleanup(time.Minute, 3*time.Minute)
+
 	app := &application{
-		logger: logger,
-		db:     database.New(pool),
+		logger:  logger,
+		db:      database.New(pool),
+		limiter: limiter,
 	}
 
 	if err := serve(ctx, app, opts.addr); err != nil {

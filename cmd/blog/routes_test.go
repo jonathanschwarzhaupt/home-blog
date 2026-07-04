@@ -18,8 +18,9 @@ func newTestApplication() *application {
 
 func newTestApplicationWithDB(db database.Querier) *application {
 	return &application{
-		logger: slog.New(slog.NewTextHandler(io.Discard, nil)),
-		db:     db,
+		logger:  slog.New(slog.NewTextHandler(io.Discard, nil)),
+		db:      db,
+		limiter: newRateLimiter(0, 0, false), // disabled — rate limiting isn't under test here
 	}
 }
 

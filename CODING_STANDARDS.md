@@ -284,7 +284,7 @@ Deliberate deviation from the book: neither binary terminates TLS itself. `blog`
 
 - Per-client token bucket via `golang.org/x/time/rate`: a `map[string]*client{limiter, lastSeen}` keyed by IP, guarded by a `sync.Mutex` (unlocked explicitly before calling `next.ServeHTTP`, not deferred).
 - A background goroutine sweeps the map every minute, evicting entries older than a few minutes, to bound memory.
-- Resolve the real client IP via a real-IP helper that checks `X-Forwarded-For`/`X-Real-IP` before falling back to `r.RemoteAddr` — necessary since requests arrive via Cloudflare Tunnel, not directly.
+- Resolve the real client IP via a real-IP helper that checks `Cf-Connecting-Ip` first — Cloudflare's edge sets this and it cannot be spoofed by the client, unlike `X-Real-IP`/`X-Forwarded-For`, which any client can set to an arbitrary value and are only safe to trust as fallbacks for non-Cloudflare contexts (e.g. local dev behind a different reverse proxy) — before finally falling back to `r.RemoteAddr`.
 - Configurable via flags (`rps`, `burst`, `enabled`) so it can be disabled for local dev/load testing without a code change.
 - Note this in-memory approach only works for a single instance — fine here since there's exactly one `blog` process, but wouldn't survive a move to multiple replicas without an external store.
 
