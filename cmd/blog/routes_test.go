@@ -8,11 +8,18 @@ import (
 	"testing"
 
 	"github.com/jonathanschwarzhaupt/my-blog/internal/assert"
+	"github.com/jonathanschwarzhaupt/my-blog/internal/database"
+	"github.com/jonathanschwarzhaupt/my-blog/internal/database/mocks"
 )
 
 func newTestApplication() *application {
+	return newTestApplicationWithDB(&mocks.MockQuerier{})
+}
+
+func newTestApplicationWithDB(db database.Querier) *application {
 	return &application{
 		logger: slog.New(slog.NewTextHandler(io.Discard, nil)),
+		db:     db,
 	}
 }
 

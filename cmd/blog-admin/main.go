@@ -7,16 +7,22 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
-	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/alexedwards/scs/pgxstore"
+	"github.com/alexedwards/scs/v2"
+	"github.com/go-playground/form/v4"
 
+	"github.com/jonathanschwarzhaupt/my-blog/internal/database"
 	"github.com/jonathanschwarzhaupt/my-blog/internal/models"
 	"github.com/jonathanschwarzhaupt/my-blog/internal/vcs"
 )
 
 type application struct {
-	logger *slog.Logger
-	pool   *pgxpool.Pool
+	logger         *slog.Logger
+	db             database.Querier
+	formDecoder    *form.Decoder
+	sessionManager *scs.SessionManager
 }
 
 func main() {
@@ -44,9 +50,15 @@ func main() {
 	}
 	defer pool.Close()
 
+	sessionManager := scs.New()
+	sessionManager.Store = pgxstore.New(pool)
+	sessionManager.Lifetime = 12 * time.Hour
+
 	app := &application{
-		logger: logger,
-		pool:   pool,
+		logger:         logger,
+		db:             database.New(pool),
+		formDecoder:    form.NewDecoder(),
+		sessionManager: sessionManager,
 	}
 
 	if err := serve(ctx, app, opts.addr); err != nil {

@@ -1,0 +1,62 @@
+package main
+
+import (
+	"context"
+	"io"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+	"time"
+
+	"github.com/jackc/pgx/v5/pgtype"
+
+	"github.com/jonathanschwarzhaupt/my-blog/internal/assert"
+	"github.com/jonathanschwarzhaupt/my-blog/internal/database"
+	"github.com/jonathanschwarzhaupt/my-blog/internal/database/mocks"
+)
+
+func TestPostView_RendersPost(t *testing.T) {
+	var gotSlug string
+
+	mockDB := &mocks.MockQuerier{
+		GetPostFunc: func(ctx context.Context, slug string) (database.Post, error) {
+			gotSlug = slug
+			return database.Post{
+				ID:          1,
+				Title:       "Hello World",
+				Slug:        "hello-world",
+				Body:        "The body content",
+				SoWhat:      "It matters because reasons",
+				Tags:        []string{"go", "blog"},
+				Version:     1,
+				PublishedAt: pgtype.Timestamptz{Time: time.Now(), Valid: true},
+			}, nil
+		},
+	}
+
+	app := newTestApplicationWithDB(mockDB)
+
+	ts := httptest.NewServer(app.routes())
+	defer ts.Close()
+
+	rs, err := http.Get(ts.URL + "/posts/hello-world")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer rs.Body.Close()
+
+	body, err := io.ReadAll(rs.Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	assert.Equal(t, rs.StatusCode, http.StatusOK)
+	assert.Equal(t, gotSlug, "hello-world")
+
+	html := string(body)
+	assert.StringContains(t, html, "Hello World")
+	assert.StringContains(t, html, "The body content")
+	assert.StringContains(t, html, "It matters because reasons")
+	assert.StringContains(t, html, "go")
+	assert.StringContains(t, html, "blog")
+}

@@ -8,15 +8,14 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/jackc/pgx/v5/pgxpool"
-
+	"github.com/jonathanschwarzhaupt/my-blog/internal/database"
 	"github.com/jonathanschwarzhaupt/my-blog/internal/models"
 	"github.com/jonathanschwarzhaupt/my-blog/internal/vcs"
 )
 
 type application struct {
 	logger *slog.Logger
-	pool   *pgxpool.Pool
+	db     database.Querier
 }
 
 func main() {
@@ -46,7 +45,7 @@ func main() {
 
 	app := &application{
 		logger: logger,
-		pool:   pool,
+		db:     database.New(pool),
 	}
 
 	if err := serve(ctx, app, opts.addr); err != nil {

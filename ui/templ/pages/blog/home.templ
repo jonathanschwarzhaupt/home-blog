@@ -1,0 +1,20 @@
+package blog
+
+import (
+	"github.com/jonathanschwarzhaupt/my-blog/internal/models"
+	"github.com/jonathanschwarzhaupt/my-blog/ui/templ/layout"
+)
+
+templ Home(posts []models.Post) {
+	@layout.Base("Home", "") {
+		<h1>Posts</h1>
+		<ul>
+			for _, post := range posts {
+				<li>
+					<a href={ templ.URL("/posts/" + post.Slug) }>{ post.Title }</a>
+					<p>{ post.SoWhat }</p>
+				</li>
+			}
+		</ul>
+	}
+}

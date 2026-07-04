@@ -1,0 +1,23 @@
+package blog
+
+import (
+	"github.com/jonathanschwarzhaupt/my-blog/internal/models"
+	"github.com/jonathanschwarzhaupt/my-blog/ui/templ/layout"
+)
+
+templ PostView(post models.Post) {
+	@layout.Base(post.Title, "") {
+		<article>
+			<h1>{ post.Title }</h1>
+			<p><strong>So what:</strong> { post.SoWhat }</p>
+			<div>{ post.Body }</div>
+			if len(post.Tags) > 0 {
+				<ul>
+					for _, tag := range post.Tags {
+						<li>{ tag }</li>
+					}
+				</ul>
+			}
+		</article>
+	}
+}
