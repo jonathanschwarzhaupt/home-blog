@@ -17,16 +17,23 @@ Two executables sharing one `internal/` tree:
 │   │   ├── handlers.go
 │   │   ├── middleware.go
 │   │   └── helpers.go
-│   └── blog-admin/      # admin binary — compose/edit, tailnet-only
-│       ├── main.go
-│       ├── routes.go
-│       ├── handlers.go
-│       ├── middleware.go
-│       └── helpers.go
+│   ├── blog-admin/      # admin binary — compose/edit, tailnet-only
+│   │   ├── main.go
+│   │   ├── routes.go
+│   │   ├── handlers.go
+│   │   ├── middleware.go
+│   │   └── helpers.go
+│   └── migrate/         # standalone goose runner — also the Kubernetes init-container image
+│       └── main.go
 ├── internal/
-│   ├── models/          # Post, Project, Tag — Postgres-backed, shared by both binaries
+│   ├── database/        # sqlc-generated code only — never hand-edited (`sqlc generate`)
+│   ├── models/           # hand-written domain types (Post, Project, Tag) + row-mapping helpers
 │   ├── validator/
 │   └── assert/          # test-only helper package
+├── sql/
+│   ├── schema/           # goose migrations (embedded into cmd/migrate)
+│   └── queries/          # sqlc query files (source for internal/database)
+├── sqlc.yaml
 └── ui/
     ├── templ/
     │   ├── layout/       # shared shell/nav (templui-based)
@@ -54,16 +61,14 @@ One `application` struct per binary, holding that binary's dependencies; handler
 ```go
 // cmd/blog/main.go
 type application struct {
-    logger  *slog.Logger
-    posts   models.PostModelInterface
-    projects models.ProjectModelInterface
+    logger *slog.Logger
+    db     database.Querier // sqlc-generated interface (internal/database), see Database section
 }
 
 // cmd/blog-admin/main.go
 type application struct {
     logger         *slog.Logger
-    posts          models.PostModelInterface
-    projects       models.ProjectModelInterface
+    db             database.Querier
     formDecoder    *form.Decoder
     sessionManager *scs.SessionManager // flash messages only — see Sessions
 }
@@ -107,46 +112,59 @@ Both binaries:
 
 `blog` has no `dynamic` chain — it's read-only, no sessions, no CSRF surface.
 
-## Database models pattern
+## Database layer: sqlc + goose
 
-`internal/models/<entity>.go`: a plain struct for the row, a `*Model` struct wrapping the pool, and an interface for mocking in tests — same shape as the book, Postgres instead of MySQL:
+Deliberate deviation from *Let's Go*'s hand-rolled `PostModel`/`PostModelInterface` pattern: **no hand-written SQL-calling model methods, and no ORM.** Two generators own this layer instead, matching the convention already proven in `jonathanschwarzhaupt/go-cookbook`:
 
-```go
-type Post struct {
-    ID        int
-    Title     string
-    Slug      string
-    Body      string
-    SoWhat    string
-    Version   int  // optimistic concurrency — see below
-    Published time.Time
-}
-type PostModel struct{ DB *pgxpool.Pool }
-type PostModelInterface interface {
-    Insert(p Post) (int, error)
-    Get(slug string) (Post, error)
-    Latest() ([]Post, error)
-    Update(p Post) error
-}
-```
+- **goose** owns schema migrations (`sql/schema/`).
+- **sqlc** owns queries, generating typed Go from them (`sql/queries/` → `internal/database/`).
 
-`openDB(dsn string)` helper in each `main.go`, pool created once, injected via `application`, closed with `defer`. `internal/models/errors.go` holds sentinel errors; translate Postgres-specific errors (e.g. unique-violation) into these before returning.
+### `internal/database` — generated, never hand-edited
 
-**Connection pool.** Always set explicit limits rather than relying on defaults — start with `MaxOpenConns=25`, `MaxIdleConns=25` (`<= MaxOpenConns`), `ConnMaxIdleTime=15*time.Minute`, exposed as flags so they can be tuned per-binary without a rebuild. Verify the pool with a bounded `PingContext` (~5s timeout) at startup — an unreachable DB should fail fast, not silently. Use Neon's **direct (unpooled)** connection string, not its PgBouncer pooler endpoint — both binaries are long-running processes managing their own pool, not serverless functions making one-shot connections, so Neon's pooler adds nothing here and can complicate prepared-statement behavior.
-
-**Query timeouts.** Every model method creates its own bounded context around the query, not the inbound request context: `ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second); defer cancel()`. Applied uniformly to `Insert`/`Get`/`Update`/`Latest`.
-
-**Optimistic concurrency.** Since posts are freely editable (see the ADR-implied product decision), every mutable table gets a `version int NOT NULL DEFAULT 1` column to guard against lost updates from concurrent edits:
+`sqlc generate` (via `make sqlc/generate`) reads `sql/schema/*.sql` (for column types) and `sql/queries/*.sql` (annotated queries) and writes `internal/database/{db,models,*.sql.go}`. `sqlc.yaml` sets `sql_package: pgx/v5` and `emit_interface: true`, so sqlc emits both a concrete `*Queries` and a `Querier` interface — `Querier` is what gets mocked in handler tests, no hand-written interface needed:
 
 ```sql
-UPDATE posts SET title=$1, body=$2, so_what=$3, version=version+1
-WHERE id=$4 AND version=$5
-RETURNING version
+-- sql/queries/posts.sql
+-- name: GetPost :one
+SELECT * FROM posts WHERE slug = $1;
+
+-- name: InsertPost :one
+INSERT INTO posts (title, slug, body, so_what, tags) VALUES ($1, $2, $3, $4, $5) RETURNING *;
 ```
 
-`sql.ErrNoRows` from that `Scan` means the record was edited or deleted since it was loaded — map to `models.ErrEditConflict` and return `409 Conflict` from the handler, never silently overwrite.
+```go
+// application struct field, either binary
+db database.Querier
+```
 
-**SQL migrations.** Paired up/down `.sql` files under `/migrations`, sequentially numbered (`000001_create_posts_table.up.sql` / `.down.sql`), managed with `golang-migrate` — this directory is the single source of schema truth and is committed to version control (not gitignored, unlike `docs/references/`). Conventions: `bigint GENERATED ALWAYS AS IDENTITY` for primary keys, `NOT NULL` + a sensible `DEFAULT` on every column, `text` instead of `varchar(n)`, `CHECK` constraints for business rules in their own migration, `IF EXISTS`/`IF NOT EXISTS` guards throughout. Migrations run explicitly via a Makefile target, never automatically from binary startup.
+Treat everything under `internal/database` as read-only generated output — changes go through `sql/queries/*.sql` + regenerate, never a direct edit.
+
+### `internal/models` — hand-written domain types only
+
+Holds plain domain structs (`Post`, `Project`, `Tag`) shaped for handlers/templates, plus small mapper functions converting a generated `database.Post` row into `models.Post` where the shapes diverge (e.g. hiding internal-only columns, converting `pgtype` wrappers to plain Go types). Handlers call `app.db.GetPost(ctx, slug)` directly and map the result — there is no `PostModel.Get` wrapper method to write or maintain.
+
+`internal/models/errors.go` holds sentinel errors (`ErrNoRecord`, `ErrEditConflict`); map Postgres-specific errors (unique-violation, no-rows) into these at the point a handler receives them from `app.db`.
+
+**Connection pool.** `internal/models` also keeps `OpenPool(ctx, dsn, cfg PoolConfig) (*pgxpool.Pool, error)` — the one piece of hand-written DB plumbing that isn't sqlc's concern. Always set explicit limits rather than relying on defaults (`MaxConns`, `MinConns`, `MaxConnIdleTime`, exposed as flags so they're tunable per binary without a rebuild). Verify the pool with a bounded `Ping` (~5s timeout) at startup — an unreachable DB should fail fast, not silently. Use Neon's **direct (unpooled)** connection string, not its PgBouncer pooler endpoint — both binaries are long-running processes managing their own pool, not serverless functions making one-shot connections.
+
+**Query timeouts.** Handlers create their own bounded context around each `app.db.*` call, not the bare inbound request context: `ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second); defer cancel()`.
+
+**Optimistic concurrency.** Since posts are freely editable, every mutable table gets a `version int NOT NULL DEFAULT 1` column to guard against lost updates from concurrent edits, expressed as a named sqlc query:
+
+```sql
+-- name: UpdatePost :one
+UPDATE posts SET title=$1, body=$2, so_what=$3, version=version+1
+WHERE id=$4 AND version=$5
+RETURNING *;
+```
+
+`pgx.ErrNoRows` from that call means the record was edited or deleted since it was loaded — the handler maps this to `models.ErrEditConflict` and returns `409 Conflict`, never a silent overwrite.
+
+### Migrations (goose)
+
+Single-file migrations under `sql/schema/`, sequentially numbered (`00001_create_posts_table.sql`), each containing `-- +goose Up` / `-- +goose Down` sections — this directory is the single source of schema truth and is committed to version control (not gitignored, unlike `docs/references/`). Conventions: `bigint GENERATED ALWAYS AS IDENTITY` for primary keys, `NOT NULL` + a sensible `DEFAULT` on every column, `text` instead of `varchar(n)`, `CHECK` constraints for business rules, `IF EXISTS`/`IF NOT EXISTS` guards throughout.
+
+`cmd/migrate` is a small standalone binary (goose used as a library, not its all-dialect CLI, to avoid pulling in every driver goose/golang-migrate support — MySQL, Cassandra, Vertica, etc. — for a Postgres-only project) that embeds `sql/schema` via `embed.FS` and runs `goose.Up`/`Down`/`Status` against a DSN flag. It's invoked locally via `make db/migrations/up`, and is built as its own minimal container image to run as a **Kubernetes init container** ahead of `blog`/`blog-admin` in the homelab — migrations are never run automatically from either server binary's startup path.
 
 ## Filtering, sorting, pagination
 
@@ -262,15 +280,15 @@ Served via `http.FileServerFS(ui.Files)`. No template embedding needed (templ co
 - `internal/assert` helper package (`Equal`, `NotEqual`, `True`, `False`, `Nil`, `NotNil`), each calling `t.Helper()`.
 - Unit-test handlers/middleware with `httptest.NewRecorder()` + `http.NewRequest(...)`.
 - `blog-admin` end-to-end tests: a `testServer` wrapping `httptest.NewServer(app.routes())` (no TLS needed locally per the deviation above) with `get()`/`postForm()` helpers and a cookie jar for session persistence; reset the jar between sub-tests.
-- Mock model dependencies in `internal/models/mocks` implementing `PostModelInterface`/`ProjectModelInterface` with fixture data.
-- Integration tests against a real test Postgres (Neon branch or local instance): `newTestDB(t)` running `testdata/setup.sql`, `t.Cleanup` running teardown; skip via `testing.Short()`.
+- Mock the database dependency by implementing sqlc's generated `database.Querier` interface with fixture data — no hand-written interface to maintain, since `emit_interface: true` generates it.
+- Integration tests against a real test Postgres (Neon branch or local instance): `newTestDB(t)` running goose migrations from `sql/schema` against a scratch database, `t.Cleanup` tearing it down; skip via `testing.Short()`.
 
 ## Build & release
 
 **Makefile** at the repo root, targets namespaced with `/` (`db/migrations/up`, `run/blog`, `run/blog-admin`, `build/blog`), never `:` in target names. All action-only rules marked `.PHONY`. A `confirm` prerequisite guards destructive targets (e.g. running migrations against a real DB): `@echo -n 'Are you sure? [y/N] ' && read ans && [ $${ans:-N} = y ]`. A self-documenting `help` target (parses `## target: description` comments from the Makefile itself) is the default (first) rule, so bare `make` prints usage.
 
-**Environment variables.** No secrets or DSNs hardcoded in `main.go` — flags default to `""`, and a gitignored `.envrc` (added to `.gitignore` the moment it's created) supplies real values via `include .envrc` in the Makefile, injected as `${VAR}` into `make run/...` targets. Flags remain the only way the running binary is actually configured; env vars are just a dev-time convenience for populating them.
+**Environment variables.** No secrets or DSNs hardcoded in `main.go` — flags default to `""`, and a gitignored `.envrc` (added to `.gitignore` the moment it's created) supplies real values via `include .envrc` in the Makefile, injected as `${VAR}` into `make run/...` targets. Flags remain the only way the running binary is actually configured; env vars are just a dev-time convenience for populating them. **Don't quote values in `.envrc`** (`export VAR=value`, not `export VAR="value"`) — Make's `include` parses `export NAME = value` as native syntax rather than sourcing it through a shell, so quote characters become part of the value literally and corrupt anything that reads the env var directly (e.g. a Go test calling `os.Getenv`) rather than through a `${VAR}`-interpolated recipe line, where the shell strips them.
 
-**Quality control**, run via `make audit` before committing (distinct from the existing `commitizen` pre-commit hook, which only lints commit messages): `go mod tidy -diff`, `go mod verify`, `go vet ./...`, `go tool staticcheck ./...`, `go test -race -vet=off ./...`. A separate mutating `make tidy` runs `go mod tidy`, `go fix ./...`, `go fmt ./...`. Install `staticcheck` as a tool dependency in `go.mod` (`go get -tool honnef.co/go/tools/cmd/staticcheck@latest`), not a separately managed global binary.
+**Quality control**, run via `make audit` before committing (distinct from the existing `commitizen` pre-commit hook, which only lints commit messages): `go mod tidy -diff`, `go mod verify`, `go vet ./...`, `go tool staticcheck ./...`, `go test -race -vet=off ./...`. A separate mutating `make tidy` runs `go mod tidy`, `go fix ./...`, `go fmt ./...`. Install `staticcheck` and `sqlc` as tool dependencies in `go.mod` (`go get -tool honnef.co/go/tools/cmd/staticcheck@latest`, `go get -tool github.com/sqlc-dev/sqlc/cmd/sqlc@latest`), not separately managed global binaries — invoke via `go tool staticcheck`/`go tool sqlc`. Prefer this `go get -tool` pattern generally, but check the resulting `go.mod` diff before committing: some CLIs (`golang-migrate/migrate/v4/cmd/migrate`, `pressly/goose/v3/cmd/goose`) unconditionally import every database dialect they support, bloating the module graph by 100+ packages for a Postgres-only project — use the library form of those instead (see Migrations above) rather than their all-dialect CLI.
 
 **Building binaries.** `go build -ldflags='-s' -o=./bin/... ./cmd/...` (strips symbol table, smaller binary); cross-compile explicitly for the homelab's actual OS/arch via `GOOS`/`GOARCH` in addition to any local dev build. `bin/` is gitignored — never commit built binaries. Derive `version` from VCS metadata (`internal/vcs.Version()` via `debug.ReadBuildInfo()`) rather than a hardcoded constant, so it's automatically the Go pseudo-version or exact tag (suffixed `+dirty` on uncommitted changes) — this only populates for `go build`, not `go run`. A `-version` flag prints it and exits immediately after `flag.Parse()`, before any DB/server setup.
