@@ -262,6 +262,8 @@ func (app *application) postView(w http.ResponseWriter, r *http.Request) {
 
 Shared layout/nav lives under `ui/templ/layout/` and is composed into every page component, mirroring the book's base-template inheritance but via ordinary Go function composition instead of `{{define}}`/`{{template}}` actions.
 
+**Gotcha:** a raw text node whose first word is `for`, `if`, or `switch` right after a tag closes (e.g. `</a> for evidence...`) makes `templ generate` misparse it as the start of a control-flow block instead of plain text. There is a real fix — wrap just that word in a Go string expression, e.g. `{ "for" }` — but the error message you get depends on nesting: at the top level of a `templ` block it names the actual problem (`for: unterminated ... to escape "for", "if", "switch" etc. with braces, e.g. '{ "for" }'`); nested inside another component's block argument (e.g. anything wrapped in `@layout.Base(...) { ... }`, which is effectively every real page) it instead surfaces as a much less obvious `expected nodes, but none were found` pointing at an unrelated line — that's the form you'll likely hit in practice.
+
 ## Client-side interactivity (Alpine.js / Alpine AJAX)
 
 Default is plain server-rendered HTML: standard `<form>` posts, full-page navigations. No JS is added by default.

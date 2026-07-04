@@ -18,6 +18,7 @@ func (app *application) routes() http.Handler {
 	mux.HandleFunc("GET /projects", app.projectsIndex)
 	mux.HandleFunc("GET /projects/{slug}", app.projectView)
 	mux.HandleFunc("GET /feed.xml", app.feed)
+	mux.HandleFunc("GET /about", app.about)
 
 	standard := alice.New(app.recoverPanic, app.limiter.middleware, app.logRequest, commonHeaders)
 

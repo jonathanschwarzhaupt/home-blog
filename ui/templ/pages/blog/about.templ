@@ -1,0 +1,27 @@
+package blog
+
+import "github.com/jonathanschwarzhaupt/my-blog/ui/templ/layout"
+
+// About renders placeholder bio/Skills content — replace with the real
+// thing. The image, bio paragraph, and skills list below are all safe to
+// edit freely; nothing else on the site depends on their contents.
+templ About() {
+	@layout.Base("About", "") {
+		<article>
+			<h1>About Me</h1>
+			<img src="/static/images/profile-placeholder.svg" alt="Photo of the site owner" width="240" height="240"/>
+			<p>
+				Hi, I'm the person behind this blog. I write about the things I build —
+				software, infrastructure, and the occasional homelab rabbit hole.
+			</p>
+			<h2>Skills</h2>
+			<ul>
+				<li>Go</li>
+				<li>PostgreSQL</li>
+				<li>Kubernetes</li>
+				<li>Homelab / self-hosting</li>
+			</ul>
+			<p>My <a href="/projects">Projects</a> page has evidence of this work in practice.</p>
+		</article>
+	}
+}
