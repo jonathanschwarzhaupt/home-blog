@@ -62,6 +62,7 @@ type application struct {
     logger  *slog.Logger
     db      database.Querier // sqlc-generated interface (internal/database), see Database section
     baseURL string
+    metrics *httpMetrics // always constructed, both modes — see Metrics
 
     limiter *rateLimiter // only constructed when the admin feature is disabled
 
@@ -82,6 +83,7 @@ Matches the `options.go` pattern from `jonathanschwarzhaupt/go-cookbook`: one `o
 // cmd/blog/options.go
 type options struct {
     addr           string
+    metricsAddr    string // never route this through a public ingress/tunnel — see Metrics
     dbDSN          string
     dbMaxConns     int
     dbMinConns     int
@@ -310,6 +312,8 @@ Deliberate deviation from the book: the binary never terminates TLS itself, in e
 
 **Graceful shutdown.** The binary (running as a long-lived homelab service, in either mode) catches `SIGINT`/`SIGTERM` on a buffered `chan os.Signal, 1`, then calls `srv.Shutdown(ctx)` with a bounded context (~30s) and exits cleanly rather than dropping in-flight requests. `http.ErrServerClosed` from `ListenAndServe` is the expected/good outcome, not an error to log. Server construction lives in its own `server.go`/`serve()` method, not inline in `main()`.
 
+Two `*http.Server`s actually run per process: the main app server (`serve()`) and the metrics server (`serveMetrics()`, see Metrics below), both on the same `SIGINT`/`SIGTERM`-derived context. `main()` waits on both before exiting (a `metricsDone` channel), not just the main server — letting the metrics goroutine get abandoned mid-shutdown when `main()` returns would undo its own graceful shutdown, since Go terminates all goroutines the instant `main()` returns regardless of what they were doing.
+
 ## Rate limiting (public mode only)
 
 Public mode is internet-facing and should defend against scraping/abuse; admin mode is tailnet-only, so the limiter is skipped there entirely rather than just relaxed — Tailscale reachability is already the access control, and a rate limiter there would only risk throttling legitimate use for no real security benefit (see `routes()`'s `layout.Features.Admin` check).
@@ -326,11 +330,22 @@ Public mode is internet-facing and should defend against scraping/abuse; admin m
 
 ## Metrics (ops, not page analytics)
 
-Separate from the self-hosted Umami/Plausible *page-view* analytics (Q13 of the design) — these are internal operational metrics, exposed via `expvar` for your own debugging, not visitor tracking:
+Separate from the self-hosted Umami/Plausible *page-view* analytics (Q13 of the design) — these are internal operational metrics for kube-prometheus-stack/Grafana dashboards in the homelab, not visitor tracking.
 
-- Mount `expvar.Handler()` at `/debug/vars`, but never expose it in public mode (internet-facing) without access control — it can leak the DSN via cmdline args and is a DoS target. In admin mode it's fine as-is since the deployment is already tailnet-only.
-- Register request-level counters via middleware wrapping the whole router: `total_requests_received`, `total_responses_sent`, cumulative processing time, and `total_responses_sent_by_status` (via a small `http.ResponseWriter` wrapper that also implements `Unwrap() http.ResponseWriter`). All as `expvar.Int`/`expvar.Map`, updated with `.Add(n)` — safe for concurrent use without extra locking.
-- Useful `expvar.Publish` values: `runtime.NumGoroutine()`, `db.Stats()` (pool health), current version.
+**`github.com/prometheus/client_golang`, not `expvar`.** An earlier version of this doc described an `expvar`-based design, following *Let's Go Further*'s own approach — but `expvar` emits a bespoke JSON format that Prometheus cannot scrape. `promhttp.Handler()` (Prometheus's actual wire format) is the correct tool whenever the consumer is a real Prometheus server, which is the case here.
+
+**Exposed on a separate port (`-metrics-addr`, default `:9091`), not the app's main port.** A second `*http.Server` (`serveMetrics` in `server.go`, mirroring `serve()`'s exact graceful-shutdown shape) serves only `promhttp.HandlerFor(registry, ...)` — completely separate from `routes()` and the app's mux. **This port must never be referenced in the Cloudflare Tunnel's ingress config** — that's what keeps it unreachable from the public internet. kube-prometheus-stack's Prometheus scrapes it in-cluster via a `PodMonitor`/`ServiceMonitor` pointed directly at the port over the cluster network, never touching the tunnel. This is the same network-boundary-over-application-auth principle already used for admin routes (Tailscale) — access control here is a Kubernetes networking concern, not something the endpoint itself checks. **No authentication is added to `/metrics`**; that's deliberate, not an oversight.
+
+Metrics are constructed and exposed in **both modes** (public and `-features=admin`), unconditionally — `application.metrics` (`*httpMetrics`) is always non-nil, since this is operational instrumentation orthogonal to the admin/public route-gating `layout.Features` controls.
+
+**v1 metric set, deliberately unlabeled by route** to sidestep cardinality risk (labeling by exact path would mean injecting a safe pattern label like `/posts/{slug}` at every route registration in `routes.go` — not done, only worth it if per-route breakdown becomes a genuine need):
+
+- **HTTP** (`httpmetrics.go`): `blog_http_requests_total` and `blog_http_request_duration_seconds`, both labeled by `method` and `status` only. The middleware reuses `statusRecorder` (the same wrapper `logRequest` uses — see Logging above) rather than reinventing status capture; it's a separate wrap in its own middleware, since logging and metrics are separate concerns even though both need the status code.
+- **Go runtime** (`metrics.go`): `collectors.NewGoCollector()` and `NewProcessCollector()` — goroutines, GC, memory, CPU, open file descriptors, all for free, no custom code.
+- **DB pool** (`dbpoolcollector.go`): a custom `prometheus.Collector` (`Describe`/`Collect`, not a fixed gauge set updated on a timer) reading `pool.Stat()` fresh on every scrape — `blog_db_pool_max_conns`, `_acquired_conns`, `_idle_conns`, `_total_conns`, `_acquire_count_total`.
+- **Build info** (`metrics.go`): `blog_build_info{version="..."} 1`, the standard "build_info" pattern most Prometheus-instrumented Go services use, sourced from `internal/vcs.Version()`.
+
+Kubernetes `PodMonitor`/`ServiceMonitor` manifests, Grafana dashboard JSON, and alerting rules live in the homelab's own infrastructure/GitOps repo (or a future Helm chart for this blog), not here — this project's job stops at correctly exposing the metrics.
 
 ## File embedding
 

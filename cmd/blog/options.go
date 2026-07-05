@@ -10,6 +10,7 @@ const defaultBaseURL = "http://localhost:4000"
 
 type options struct {
 	addr           string
+	metricsAddr    string
 	baseURL        string
 	dbDSN          string
 	dbMaxConns     int
@@ -27,6 +28,7 @@ func parseOptions() *options {
 	opts := &options{}
 
 	flag.StringVar(&opts.addr, "addr", ":4000", "HTTP network address")
+	flag.StringVar(&opts.metricsAddr, "metrics-addr", ":9091", "Prometheus metrics network address (never route this through a public ingress/tunnel)")
 	flag.StringVar(&opts.baseURL, "base-url", defaultBaseURL, "Public base URL used for absolute links (e.g. RSS)")
 	flag.StringVar(&opts.dbDSN, "db-dsn", os.Getenv("BLOG_DB_DSN"), "PostgreSQL DSN")
 	flag.IntVar(&opts.dbMaxConns, "db-max-conns", 25, "PostgreSQL max open connections")

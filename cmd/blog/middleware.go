@@ -39,6 +39,17 @@ func (r *statusRecorder) Unwrap() http.ResponseWriter {
 	return r.ResponseWriter
 }
 
+// Status returns the response status, defaulting to 200 if the handler
+// never called Write or WriteHeader at all — matching what a real client
+// actually receives in that case (net/http sends an empty 200 OK once the
+// handler returns), a case r.status's zero value alone wouldn't reflect.
+func (r *statusRecorder) Status() int {
+	if !r.wroteHeader {
+		return http.StatusOK
+	}
+	return r.status
+}
+
 func commonHeaders(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Security-Policy",
@@ -71,7 +82,7 @@ func (app *application) logRequest(next http.Handler) http.Handler {
 			"proto", r.Proto,
 			"method", r.Method,
 			"uri", r.URL.RequestURI(),
-			"status", rec.status,
+			"status", rec.Status(),
 			"duration_ms", time.Since(start).Milliseconds(),
 		)
 	})

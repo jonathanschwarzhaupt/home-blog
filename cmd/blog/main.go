@@ -13,6 +13,7 @@ import (
 	"github.com/alexedwards/scs/pgxstore"
 	"github.com/alexedwards/scs/v2"
 	"github.com/go-playground/form/v4"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/jonathanschwarzhaupt/my-blog/internal/database"
 	"github.com/jonathanschwarzhaupt/my-blog/internal/models"
@@ -24,6 +25,12 @@ type application struct {
 	logger  *slog.Logger
 	db      database.Querier
 	baseURL string
+
+	// metrics is always constructed, regardless of mode — operational
+	// instrumentation applies to both deployments equally and is
+	// orthogonal to the admin/public route-gating layout.Features
+	// controls.
+	metrics *httpMetrics
 
 	// limiter is only constructed when the admin feature is disabled — the
 	// admin deployment is Tailscale-only, so rate limiting adds no real
@@ -76,10 +83,15 @@ func main() {
 		logger.Warn("base-url is unset or still the default; RSS feed links will be unusable in production", "base-url", baseURL)
 	}
 
+	metricsRegistry := newMetricsRegistry()
+	metricsRegistry.MustRegister(newDBPoolCollector(pool))
+	httpMetrics := newHTTPMetrics(metricsRegistry)
+
 	app := &application{
 		logger:  logger,
 		db:      database.New(pool),
 		baseURL: strings.TrimSuffix(baseURL, "/"),
+		metrics: httpMetrics,
 	}
 
 	if layout.Features.Admin {
@@ -95,8 +107,23 @@ func main() {
 		app.limiter = limiter
 	}
 
-	if err := serve(ctx, app, opts.addr); err != nil {
+	// Never route opts.metricsAddr through a public ingress/tunnel — access
+	// control here is enforced by network topology (only reachable inside
+	// the cluster, scraped in-cluster by Prometheus), not application-level
+	// auth. See CODING_STANDARDS.md's Metrics section.
+	metricsDone := make(chan error, 1)
+	go func() {
+		metricsDone <- serveMetrics(ctx, logger, opts.metricsAddr, promhttp.HandlerFor(metricsRegistry, promhttp.HandlerOpts{}))
+	}()
+
+	serveErr := serve(ctx, app, opts.addr)
+
+	if err := <-metricsDone; err != nil {
 		logger.Error(err.Error())
+	}
+
+	if serveErr != nil {
+		logger.Error(serveErr.Error())
 		os.Exit(1)
 	}
 }

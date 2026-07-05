@@ -13,6 +13,7 @@ import (
 	"github.com/alexedwards/scs/v2"
 	"github.com/go-playground/form/v4"
 	"github.com/jackc/pgx/v5"
+	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/jonathanschwarzhaupt/my-blog/internal/assert"
 	"github.com/jonathanschwarzhaupt/my-blog/internal/database"
@@ -40,6 +41,7 @@ func newTestApplicationWithDB(db database.Querier) *application {
 		baseURL:        "http://example.com",
 		formDecoder:    form.NewDecoder(),
 		sessionManager: sessionManager,
+		metrics:        newHTTPMetrics(prometheus.NewRegistry()),
 	}
 }
 
@@ -58,6 +60,7 @@ func newTestPublicApplicationWithDB(db database.Querier) *application {
 		db:      db,
 		baseURL: "http://example.com",
 		limiter: newRateLimiter(0, 0, false), // disabled — rate limiting isn't under test here
+		metrics: newHTTPMetrics(prometheus.NewRegistry()),
 	}
 }
 

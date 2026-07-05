@@ -41,3 +41,17 @@ func TestStatusRecorder_Unwrap(t *testing.T) {
 		t.Fatal("Unwrap did not return the underlying ResponseWriter")
 	}
 }
+
+func TestStatusRecorder_StatusDefaultsToOKWhenNothingWritten(t *testing.T) {
+	rec := &statusRecorder{ResponseWriter: httptest.NewRecorder()}
+
+	assert.Equal(t, rec.Status(), http.StatusOK)
+}
+
+func TestStatusRecorder_StatusReflectsExplicitWriteHeader(t *testing.T) {
+	rec := &statusRecorder{ResponseWriter: httptest.NewRecorder()}
+
+	rec.WriteHeader(http.StatusTeapot)
+
+	assert.Equal(t, rec.Status(), http.StatusTeapot)
+}
