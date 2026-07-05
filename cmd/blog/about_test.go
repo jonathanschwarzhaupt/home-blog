@@ -4,6 +4,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/jonathanschwarzhaupt/my-blog/internal/assert"
@@ -38,21 +39,11 @@ func TestAbout_RendersExpectedSections(t *testing.T) {
 	// "inline-flex" is one of Button's base classes, present regardless of
 	// variant/size/theme, so this doesn't couple to exact color/accent
 	// choices while still proving it's button-rendered.
-	linkIdx := lastIndexOf(html, `href="/projects"`)
+	linkIdx := strings.LastIndex(html, `href="/projects"`)
 	assert.True(t, linkIdx >= 0)
-	tagStart := lastIndexOf(html[:linkIdx], "<a")
+	tagStart := strings.LastIndex(html[:linkIdx], "<a")
 	assert.True(t, tagStart >= 0)
-	tagEnd := indexOf(html[tagStart:], ">")
+	tagEnd := strings.Index(html[tagStart:], ">")
 	assert.True(t, tagEnd >= 0)
 	assert.StringContains(t, html[tagStart:tagStart+tagEnd], "inline-flex")
-}
-
-func lastIndexOf(s, substr string) int {
-	last := -1
-	for i := 0; i+len(substr) <= len(s); i++ {
-		if s[i:i+len(substr)] == substr {
-			last = i
-		}
-	}
-	return last
 }

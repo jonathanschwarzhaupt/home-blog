@@ -6,6 +6,12 @@ import (
 
 	"github.com/jonathanschwarzhaupt/my-blog/internal/models"
 	"github.com/jonathanschwarzhaupt/my-blog/internal/validator"
+	"github.com/jonathanschwarzhaupt/my-blog/ui/templ/components/alert"
+	"github.com/jonathanschwarzhaupt/my-blog/ui/templ/components/button"
+	"github.com/jonathanschwarzhaupt/my-blog/ui/templ/components/checkbox"
+	"github.com/jonathanschwarzhaupt/my-blog/ui/templ/components/input"
+	"github.com/jonathanschwarzhaupt/my-blog/ui/templ/components/label"
+	"github.com/jonathanschwarzhaupt/my-blog/ui/templ/components/textarea"
 	"github.com/jonathanschwarzhaupt/my-blog/ui/templ/layout"
 )
 
@@ -28,42 +34,59 @@ func (f *ComposeForm) Validate() {
 }
 
 templ formFields(form ComposeForm) {
-	<div>
-		<label>Title</label>
+	<div class="flex flex-col gap-1.5">
+		@label.Label(label.Props{For: "title", Error: form.FieldErrors["title"]}) {
+			Title
+		}
+		@input.Input(input.Props{
+			ID:       "title",
+			Name:     "title",
+			Value:    form.Title,
+			HasError: form.FieldErrors["title"] != "",
+		})
 		if err, ok := form.FieldErrors["title"]; ok {
-			<label class="error">{ err }</label>
+			<p class="text-sm text-destructive">{ err }</p>
 		}
-		<input type="text" name="title" value={ form.Title }/>
 	</div>
-	<div>
-		<label>Body</label>
-		<textarea name="body">{ form.Body }</textarea>
+	<div class="flex flex-col gap-1.5">
+		@label.Label(label.Props{For: "body"}) {
+			Body
+		}
+		@textarea.Textarea(textarea.Props{ID: "body", Name: "body", Value: form.Body, Rows: 10})
 	</div>
-	<div>
-		<label>So What</label>
+	<div class="flex flex-col gap-1.5">
+		@label.Label(label.Props{For: "so_what", Error: form.FieldErrors["so_what"]}) {
+			So What
+		}
+		@input.Input(input.Props{
+			ID:       "so_what",
+			Name:     "so_what",
+			Value:    form.SoWhat,
+			HasError: form.FieldErrors["so_what"] != "",
+		})
 		if err, ok := form.FieldErrors["so_what"]; ok {
-			<label class="error">{ err }</label>
+			<p class="text-sm text-destructive">{ err }</p>
 		}
-		<input type="text" name="so_what" value={ form.SoWhat }/>
 	</div>
-	<div>
-		<label>Tags (comma-separated)</label>
-		<input type="text" name="tags" value={ form.Tags }/>
+	<div class="flex flex-col gap-1.5">
+		@label.Label(label.Props{For: "tags"}) {
+			Tags (comma-separated)
+		}
+		@input.Input(input.Props{ID: "tags", Name: "tags", Value: form.Tags})
 	</div>
 }
 
 templ projectCheckboxes(allProjects []models.Project, form ComposeForm) {
 	if len(allProjects) > 0 {
-		<fieldset>
-			<legend>Projects</legend>
+		<fieldset class="flex flex-col gap-2">
+			<legend class="text-sm font-medium">Projects</legend>
 			for _, p := range allProjects {
-				<label>
-					<input
-						type="checkbox"
-						name="project_ids"
-						value={ strconv.FormatInt(p.ID, 10) }
-						checked?={ slices.Contains(form.ProjectIDs, p.ID) }
-					/>
+				<label class="flex items-center gap-2 text-sm">
+					@checkbox.Checkbox(checkbox.Props{
+						Name:    "project_ids",
+						Value:   strconv.FormatInt(p.ID, 10),
+						Checked: slices.Contains(form.ProjectIDs, p.ID),
+					})
 					{ p.Name }
 				</label>
 			}
@@ -73,13 +96,21 @@ templ projectCheckboxes(allProjects []models.Project, form ComposeForm) {
 
 templ Compose(form ComposeForm, allProjects []models.Project, flash string) {
 	@layout.Base("Compose", flash) {
-		<form method="POST" action="/posts">
-			for _, err := range form.NonFieldErrors {
-				<div class="error">{ err }</div>
+		<form method="POST" action="/posts" class="flex flex-col gap-4">
+			if len(form.NonFieldErrors) > 0 {
+				@alert.Alert(alert.Props{Variant: alert.VariantDestructive}) {
+					@alert.Description() {
+						for _, err := range form.NonFieldErrors {
+							<p>{ err }</p>
+						}
+					}
+				}
 			}
 			@formFields(form)
 			@projectCheckboxes(allProjects, form)
-			<button type="submit">Publish</button>
+			@button.Button(button.Props{Type: button.TypeSubmit}) {
+				Publish
+			}
 		</form>
 	}
 }

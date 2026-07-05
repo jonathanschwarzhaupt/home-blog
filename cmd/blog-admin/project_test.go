@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"strings"
 	"testing"
 
 	"github.com/jackc/pgx/v5/pgconn"
@@ -288,8 +289,18 @@ func TestPostEdit_PreChecksExistingProjects(t *testing.T) {
 	html := string(body)
 	assert.StringContains(t, html, "Homelab")
 	assert.StringContains(t, html, "Blog Rebuild")
-	// The checked checkbox (value="2") should appear with the checked attribute.
-	assert.StringContains(t, html, `value="2" checked`)
+
+	// The checkbox for project id=2 (the post's current association) should
+	// carry the checked attribute; found by locating its own <input> tag
+	// rather than assuming a fixed attribute order, since that's an
+	// implementation detail of the checkbox component, not our markup.
+	valueIdx := strings.Index(html, `value="2"`)
+	assert.True(t, valueIdx >= 0)
+	tagStart := strings.LastIndex(html[:valueIdx], "<input")
+	assert.True(t, tagStart >= 0)
+	tagEnd := strings.Index(html[tagStart:], ">")
+	assert.True(t, tagEnd >= 0)
+	assert.StringContains(t, html[tagStart:tagStart+tagEnd], "checked")
 }
 
 func TestPostUpdate_RejectsNonexistentProject(t *testing.T) {

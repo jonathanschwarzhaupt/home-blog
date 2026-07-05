@@ -4,19 +4,29 @@ import (
 	"strconv"
 
 	"github.com/jonathanschwarzhaupt/my-blog/internal/models"
+	"github.com/jonathanschwarzhaupt/my-blog/ui/templ/components/alert"
+	"github.com/jonathanschwarzhaupt/my-blog/ui/templ/components/button"
 	"github.com/jonathanschwarzhaupt/my-blog/ui/templ/layout"
 )
 
 templ Edit(form ComposeForm, slug string, allProjects []models.Project, flash string) {
 	@layout.Base("Edit", flash) {
-		<form method="POST" action={ templ.URL("/posts/" + slug + "/edit") }>
-			for _, err := range form.NonFieldErrors {
-				<div class="error">{ err }</div>
+		<form method="POST" action={ templ.URL("/posts/" + slug + "/edit") } class="flex flex-col gap-4">
+			if len(form.NonFieldErrors) > 0 {
+				@alert.Alert(alert.Props{Variant: alert.VariantDestructive}) {
+					@alert.Description() {
+						for _, err := range form.NonFieldErrors {
+							<p>{ err }</p>
+						}
+					}
+				}
 			}
 			<input type="hidden" name="version" value={ strconv.FormatInt(int64(form.Version), 10) }/>
 			@formFields(form)
 			@projectCheckboxes(allProjects, form)
-			<button type="submit">Update</button>
+			@button.Button(button.Props{Type: button.TypeSubmit}) {
+				Update
+			}
 		</form>
 	}
 }

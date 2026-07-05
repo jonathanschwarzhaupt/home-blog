@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -54,23 +55,14 @@ func TestProjectView_ListsPostsOldestFirst(t *testing.T) {
 	assert.StringContains(t, html, "Homelab")
 	assert.StringContains(t, html, "Running my own infra.")
 
-	firstIdx := indexOf(html, "Part One")
-	secondIdx := indexOf(html, "Part Two")
+	firstIdx := strings.Index(html, "Part One")
+	secondIdx := strings.Index(html, "Part Two")
 	assert.True(t, firstIdx >= 0 && secondIdx >= 0 && firstIdx < secondIdx)
 
 	// Exercises PostCard's tag-badge rendering path through the Project
 	// view specifically, not just Home (which shares the same component).
 	assert.StringContains(t, html, "go")
 	assert.StringContains(t, html, "homelab")
-}
-
-func indexOf(s, substr string) int {
-	for i := 0; i+len(substr) <= len(s); i++ {
-		if s[i:i+len(substr)] == substr {
-			return i
-		}
-	}
-	return -1
 }
 
 func TestProjectView_UnknownSlugNotFound(t *testing.T) {
