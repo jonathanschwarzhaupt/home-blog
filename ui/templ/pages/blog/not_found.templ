@@ -1,0 +1,17 @@
+package blog
+
+import (
+	"github.com/jonathanschwarzhaupt/my-blog/ui/templ/layout"
+)
+
+templ NotFound() {
+	@layout.Base("Not Found", "") {
+		<div class="py-12 text-center">
+			<h1 class="text-2xl font-semibold tracking-tight">Page not found</h1>
+			<p class="mt-2 text-muted-foreground">There's nothing here — the link might be old, or the page never existed.</p>
+			<div class="mt-6">
+				<a href="/" class="text-primary hover:underline">Back to Home</a>
+			</div>
+		</div>
+	}
+}

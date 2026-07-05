@@ -44,7 +44,7 @@ func (app *application) routes() http.Handler {
 		// rather than just relaxed.
 		middlewares = append(middlewares, app.limiter.middleware)
 	}
-	middlewares = append(middlewares, app.logRequest, commonHeaders)
+	middlewares = append(middlewares, app.logRequest, commonHeaders, app.styleNotFound)
 
 	standard := alice.New(middlewares...)
 

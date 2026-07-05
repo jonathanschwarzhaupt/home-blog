@@ -21,7 +21,7 @@ func (app *application) postView(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		err = models.WrapDBError(err)
 		if errors.Is(err, models.ErrNoRecord) {
-			http.NotFound(w, r)
+			app.notFound(w)
 			return
 		}
 		app.serverError(w, r, err)
