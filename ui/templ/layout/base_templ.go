@@ -47,7 +47,7 @@ func Base(title string, flash string) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		if Features.Admin {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<a href=\"/posts/new\" class=\"text-muted-foreground transition-colors hover:text-primary sm:ml-auto\">New Post</a> <a href=\"/projects/new\" class=\"text-muted-foreground transition-colors hover:text-primary\">New Project</a>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<a href=\"/admin\" class=\"text-muted-foreground transition-colors hover:text-primary sm:ml-auto\">Admin</a>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -64,7 +64,7 @@ func Base(title string, flash string) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(flash)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `ui/templ/layout/base.templ`, Line: 27, Col: 105}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `ui/templ/layout/base.templ`, Line: 26, Col: 105}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -90,7 +90,7 @@ func Base(title string, flash string) templ.Component {
 		var templ_7745c5c3_Var4 string
 		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(randomQuip())
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `ui/templ/layout/base.templ`, Line: 34, Col: 18}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `ui/templ/layout/base.templ`, Line: 33, Col: 18}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 		if templ_7745c5c3_Err != nil {

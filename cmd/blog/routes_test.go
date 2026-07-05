@@ -131,8 +131,7 @@ func TestBase_ShowsAdminNav(t *testing.T) {
 	}
 
 	html := string(body)
-	assert.StringContains(t, html, `href="/posts/new"`)
-	assert.StringContains(t, html, `href="/projects/new"`)
+	assert.StringContains(t, html, `href="/admin"`)
 }
 
 func TestBase_HidesAdminNav(t *testing.T) {
@@ -159,8 +158,7 @@ func TestBase_HidesAdminNav(t *testing.T) {
 	}
 
 	html := string(body)
-	assert.False(t, strings.Contains(html, `href="/posts/new"`))
-	assert.False(t, strings.Contains(html, `href="/projects/new"`))
+	assert.False(t, strings.Contains(html, `href="/admin"`))
 }
 
 func TestRoutes_AdminRoutesNotFoundWhenDisabled(t *testing.T) {
