@@ -1,0 +1,45 @@
+package blog
+
+import (
+	"github.com/jonathanschwarzhaupt/my-blog/internal/models"
+	"github.com/jonathanschwarzhaupt/my-blog/ui/templ/components/badge"
+	"github.com/jonathanschwarzhaupt/my-blog/ui/templ/components/card"
+	"github.com/jonathanschwarzhaupt/my-blog/ui/templ/components/utils"
+)
+
+// PostCard is the reusable scannable-card treatment for a Post — used on the
+// home page and (later) a Project's page, so both list Posts consistently.
+//
+// So What renders here as plain, muted card.Description text rather than
+// PostView's accented callout box — a deliberate, lighter emphasis for list
+// context, where many cards sit next to each other; the callout treatment
+// is reserved for the focused single-post reading experience.
+templ PostCard(post models.Post) {
+	@card.Card() {
+		@card.Header(card.HeaderProps{
+			// card.Header defaults to pb-0, assuming a following Content
+			// section supplies bottom padding. With no tags, there's no
+			// Content section, so restore it here to keep card spacing
+			// consistent whether or not a Post has tags.
+			Class: utils.IfElse(len(post.Tags) == 0, "pb-6", ""),
+		}) {
+			@card.Title() {
+				<a href={ templ.URL("/posts/" + post.Slug) } class="hover:underline">{ post.Title }</a>
+			}
+			@card.Description() {
+				{ post.SoWhat }
+			}
+		}
+		if len(post.Tags) > 0 {
+			@card.Content() {
+				<div class="flex flex-wrap gap-2">
+					for _, tag := range post.Tags {
+						@badge.Badge(badge.Props{Variant: badge.VariantSecondary}) {
+							{ tag }
+						}
+					}
+				</div>
+			}
+		}
+	}
+}

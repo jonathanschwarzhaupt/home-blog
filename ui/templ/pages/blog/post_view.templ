@@ -2,22 +2,35 @@ package blog
 
 import (
 	"github.com/jonathanschwarzhaupt/my-blog/internal/models"
+	"github.com/jonathanschwarzhaupt/my-blog/ui/templ/components/badge"
 	"github.com/jonathanschwarzhaupt/my-blog/ui/templ/layout"
 )
 
 templ PostView(post models.Post) {
 	@layout.Base(post.Title, "") {
 		<article>
-			<h1>{ post.Title }</h1>
-			<p><strong>So what:</strong> { post.SoWhat }</p>
-			<div>{ post.Body }</div>
+			<h1 class="text-3xl font-semibold tracking-tight">{ post.Title }</h1>
+			<div class="mt-4 rounded-md border border-primary/20 bg-primary/5 px-4 py-3">
+				<p class="text-sm font-medium text-primary">So What</p>
+				<p class="mt-1 text-sm text-foreground">{ post.SoWhat }</p>
+			</div>
 			if len(post.Tags) > 0 {
-				<ul>
+				<div class="mt-4 flex flex-wrap gap-2">
 					for _, tag := range post.Tags {
-						<li>{ tag }</li>
+						@badge.Badge(badge.Props{Variant: badge.VariantSecondary}) {
+							{ tag }
+						}
 					}
-				</ul>
+				</div>
 			}
+			<!--
+				Body is stored/displayed as plain text (no markdown renderer
+				exists yet), so whitespace-pre-wrap is what preserves the
+				author's paragraph/line breaks — without it, HTML collapses
+				all whitespace and the body reads as one run-on blob
+				regardless of prose's typography styling.
+			-->
+			<div class="prose prose-neutral mt-8 max-w-none whitespace-pre-wrap">{ post.Body }</div>
 		</article>
 	}
 }

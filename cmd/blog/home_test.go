@@ -23,7 +23,7 @@ func TestHome_ListsPostsNewestFirst(t *testing.T) {
 	mockDB := &mocks.MockQuerier{
 		ListPostsFunc: func(ctx context.Context) ([]database.Post, error) {
 			return []database.Post{
-				{ID: 2, Title: "Newer Post", Slug: "newer-post", SoWhat: "recent", PublishedAt: newer},
+				{ID: 2, Title: "Newer Post", Slug: "newer-post", SoWhat: "recent", Tags: []string{"go", "homelab"}, PublishedAt: newer},
 				{ID: 1, Title: "Older Post", Slug: "older-post", SoWhat: "past", PublishedAt: older},
 			}, nil
 		},
@@ -54,4 +54,9 @@ func TestHome_ListsPostsNewestFirst(t *testing.T) {
 	assert.True(t, newerIdx >= 0)
 	assert.True(t, olderIdx >= 0)
 	assert.True(t, newerIdx < olderIdx)
+
+	// Exercises PostCard's tag-badge rendering path (the "Newer Post"
+	// fixture has tags, "Older Post" doesn't — both card layouts are covered).
+	assert.StringContains(t, html, "go")
+	assert.StringContains(t, html, "homelab")
 }
