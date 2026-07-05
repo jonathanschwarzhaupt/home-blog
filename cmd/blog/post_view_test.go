@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -95,4 +96,56 @@ func TestPostView_RendersMarkdownBody(t *testing.T) {
 	html := string(body)
 	assert.StringContains(t, html, "<strong>bold</strong>")
 	assert.StringContains(t, html, `<a href="https://example.com">link</a>`)
+}
+
+func TestPostView_ShowsEditMenuInAdminMode(t *testing.T) {
+	mockDB := &mocks.MockQuerier{
+		GetPostFunc: func(ctx context.Context, slug string) (database.Post, error) {
+			return database.Post{ID: 1, Title: "Hello World", Slug: "hello-world", Body: "Body", SoWhat: "So what"}, nil
+		},
+	}
+
+	app := newTestApplicationWithDB(mockDB)
+
+	ts := httptest.NewServer(app.routes())
+	defer ts.Close()
+
+	rs, err := http.Get(ts.URL + "/posts/hello-world")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer rs.Body.Close()
+
+	body, err := io.ReadAll(rs.Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	assert.StringContains(t, string(body), `href="/posts/hello-world/edit"`)
+}
+
+func TestPostView_HidesEditMenuInPublicMode(t *testing.T) {
+	mockDB := &mocks.MockQuerier{
+		GetPostFunc: func(ctx context.Context, slug string) (database.Post, error) {
+			return database.Post{ID: 1, Title: "Hello World", Slug: "hello-world", Body: "Body", SoWhat: "So what"}, nil
+		},
+	}
+
+	app := newTestPublicApplicationWithDB(mockDB)
+
+	ts := httptest.NewServer(app.routes())
+	defer ts.Close()
+
+	rs, err := http.Get(ts.URL + "/posts/hello-world")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer rs.Body.Close()
+
+	body, err := io.ReadAll(rs.Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	assert.False(t, strings.Contains(string(body), "/edit"))
 }
