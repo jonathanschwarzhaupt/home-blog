@@ -71,7 +71,7 @@ type application struct {
 }
 ```
 
-`limiter` is dereferenced directly inside `routes()`'s own admin-gated branch. `formDecoder`/`sessionManager` are dereferenced in the admin-only handlers themselves (`compose.go`, `edit.go`, `project.go`), not in `routes()` — their nil-safety comes from those handlers only being reachable at all when `routes()` registers the mux entries that call them, which only happens when the admin feature is active.
+`limiter` is dereferenced directly inside `routes()`'s own admin-gated branch. `formDecoder`/`sessionManager` are dereferenced in the admin-only handlers themselves (`post_create.go`, `post_edit.go`, `project_create.go`), not in `routes()` — their nil-safety comes from those handlers only being reachable at all when `routes()` registers the mux entries that call them, which only happens when the admin feature is active.
 
 Never stash long-lived dependencies (DB pool, logger) in request context — only request-scoped data belongs there.
 
