@@ -19,6 +19,7 @@ type Querier interface {
 	InsertPost(ctx context.Context, arg InsertPostParams) (Post, error)
 	InsertPostProject(ctx context.Context, arg InsertPostProjectParams) error
 	InsertProject(ctx context.Context, arg InsertProjectParams) (Project, error)
+	ListDistinctTags(ctx context.Context) ([]string, error)
 	ListFeaturedPosts(ctx context.Context) ([]Post, error)
 	ListFeaturedProjects(ctx context.Context) ([]Project, error)
 	ListPosts(ctx context.Context) ([]Post, error)

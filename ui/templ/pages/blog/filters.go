@@ -16,6 +16,7 @@ type PostFilters struct {
 	Sort string // "newest" (default) or "oldest"
 	From string // "YYYY-MM-DD" or ""
 	To   string // "YYYY-MM-DD" or ""
+	Tag  string // single tag, "" = no filter
 }
 
 func ParsePostFilters(query url.Values) PostFilters {
@@ -34,10 +35,11 @@ func ParsePostFilters(query url.Values) PostFilters {
 		Sort: sort,
 		From: query.Get("from"),
 		To:   query.Get("to"),
+		Tag:  query.Get("tag"),
 	}
 }
 
-// baseQuery carries forward the currently active sort/date-range filters
+// baseQuery carries forward the currently active sort/date-range/tag filters
 // (but not page — callers decide whether page belongs in a given link).
 func (f PostFilters) baseQuery() url.Values {
 	v := url.Values{}
@@ -50,6 +52,9 @@ func (f PostFilters) baseQuery() url.Values {
 	if f.To != "" {
 		v.Set("to", f.To)
 	}
+	if f.Tag != "" {
+		v.Set("tag", f.Tag)
+	}
 	return v
 }
 
@@ -60,10 +65,21 @@ func linkFrom(v url.Values) string {
 	return "/posts?" + v.Encode()
 }
 
+// TagFilterLink builds a link filtering /posts to a single tag, from
+// anywhere a tag is shown standalone (a post card, a post's own page) rather
+// than from the posts index itself — so it doesn't try to preserve unrelated
+// filter state from wherever it was clicked, just a fresh, correctly
+// URL-encoded /posts?tag=... link.
+func TagFilterLink(tag string) string {
+	v := url.Values{}
+	v.Set("tag", tag)
+	return linkFrom(v)
+}
+
 // SortLink builds a link that switches to the given sort direction,
-// preserving the active date range. Deliberately omits page — switching
-// sort changes the order of every result, so "page N" from the old view
-// doesn't mean anything in the new one.
+// preserving the active date range and tag. Deliberately omits page —
+// switching sort changes the order of every result, so "page N" from the
+// old view doesn't mean anything in the new one.
 func (f PostFilters) SortLink(sort string) string {
 	v := url.Values{}
 	if sort == "oldest" {
@@ -75,11 +91,34 @@ func (f PostFilters) SortLink(sort string) string {
 	if f.To != "" {
 		v.Set("to", f.To)
 	}
+	if f.Tag != "" {
+		v.Set("tag", f.Tag)
+	}
 	return linkFrom(v)
 }
 
-// PageLink builds a link to a specific page, preserving sort and date range.
-// Unlike SortLink, plain pagination doesn't invalidate the current filters.
+// TagLink builds a link that switches to the given tag, preserving sort and
+// date range, resetting page for the same reason SortLink does.
+func (f PostFilters) TagLink(tag string) string {
+	v := url.Values{}
+	if f.Sort == "oldest" {
+		v.Set("sort", "oldest")
+	}
+	if f.From != "" {
+		v.Set("from", f.From)
+	}
+	if f.To != "" {
+		v.Set("to", f.To)
+	}
+	if tag != "" {
+		v.Set("tag", tag)
+	}
+	return linkFrom(v)
+}
+
+// PageLink builds a link to a specific page, preserving sort, date range,
+// and tag. Unlike SortLink/TagLink, plain pagination doesn't invalidate the
+// current filters.
 func (f PostFilters) PageLink(page int) string {
 	v := f.baseQuery()
 	if page > 1 {
@@ -88,11 +127,15 @@ func (f PostFilters) PageLink(page int) string {
 	return linkFrom(v)
 }
 
-// ClearDateRangeLink preserves sort but drops from/to and resets to page 1.
+// ClearDateRangeLink preserves sort and tag but drops from/to and resets to
+// page 1.
 func (f PostFilters) ClearDateRangeLink() string {
 	v := url.Values{}
 	if f.Sort == "oldest" {
 		v.Set("sort", "oldest")
+	}
+	if f.Tag != "" {
+		v.Set("tag", f.Tag)
 	}
 	return linkFrom(v)
 }

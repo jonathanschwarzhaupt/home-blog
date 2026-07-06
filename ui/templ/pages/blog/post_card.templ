@@ -34,9 +34,11 @@ templ PostCard(post models.Post) {
 			@card.Content() {
 				<div class="flex flex-wrap gap-2">
 					for _, tag := range post.Tags {
-						@badge.Badge(badge.Props{Variant: badge.VariantSecondary}) {
-							{ tag }
-						}
+						<a href={ templ.URL(TagFilterLink(tag)) }>
+							@badge.Badge(badge.Props{Variant: badge.VariantSecondary}) {
+								{ tag }
+							}
+						</a>
 					}
 				</div>
 			}

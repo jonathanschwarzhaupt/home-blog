@@ -26,9 +26,11 @@ templ PostView(post models.Post, bodyHTML string) {
 			if len(post.Tags) > 0 {
 				<div class="mt-4 flex flex-wrap gap-2">
 					for _, tag := range post.Tags {
-						@badge.Badge(badge.Props{Variant: badge.VariantSecondary}) {
-							{ tag }
-						}
+						<a href={ templ.URL(TagFilterLink(tag)) }>
+							@badge.Badge(badge.Props{Variant: badge.VariantSecondary}) {
+								{ tag }
+							}
+						</a>
 					}
 				</div>
 			}

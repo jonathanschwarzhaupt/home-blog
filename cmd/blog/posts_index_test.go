@@ -20,6 +20,7 @@ func TestPostsIndex_ListsAllPosts(t *testing.T) {
 				{ID: 2, Title: "Second Post", Slug: "second-post", SoWhat: "It's the second one.", TotalCount: 2},
 			}, nil
 		},
+		ListDistinctTagsFunc: func(ctx context.Context) ([]string, error) { return nil, nil },
 	}
 
 	app := newTestApplicationWithDB(mockDB)
@@ -52,6 +53,7 @@ func TestPostsIndex_NoPosts(t *testing.T) {
 		ListPostsFilteredFunc: func(ctx context.Context, arg database.ListPostsFilteredParams) ([]database.ListPostsFilteredRow, error) {
 			return []database.ListPostsFilteredRow{}, nil
 		},
+		ListDistinctTagsFunc: func(ctx context.Context) ([]string, error) { return nil, nil },
 	}
 
 	app := newTestApplicationWithDB(mockDB)
@@ -97,6 +99,7 @@ func TestPostsIndex_PassesFiltersThroughToTheQuery(t *testing.T) {
 			gotParams = arg
 			return []database.ListPostsFilteredRow{}, nil
 		},
+		ListDistinctTagsFunc: func(ctx context.Context) ([]string, error) { return nil, nil },
 	}
 
 	app := newTestApplicationWithDB(mockDB)
@@ -128,6 +131,7 @@ func TestPostsIndex_InvalidQueryParamsFallBackToDefaults(t *testing.T) {
 			gotParams = arg
 			return []database.ListPostsFilteredRow{}, nil
 		},
+		ListDistinctTagsFunc: func(ctx context.Context) ([]string, error) { return nil, nil },
 	}
 
 	app := newTestApplicationWithDB(mockDB)
@@ -152,6 +156,7 @@ func TestPostsIndex_PageBeyondLastPageReturnsEmptyNotError(t *testing.T) {
 		ListPostsFilteredFunc: func(ctx context.Context, arg database.ListPostsFilteredParams) ([]database.ListPostsFilteredRow, error) {
 			return []database.ListPostsFilteredRow{}, nil
 		},
+		ListDistinctTagsFunc: func(ctx context.Context) ([]string, error) { return nil, nil },
 	}
 
 	app := newTestApplicationWithDB(mockDB)
@@ -172,4 +177,89 @@ func TestPostsIndex_PageBeyondLastPageReturnsEmptyNotError(t *testing.T) {
 
 	assert.Equal(t, rs.StatusCode, http.StatusOK)
 	assert.StringContains(t, string(body), "No posts match these filters.")
+}
+
+func TestPostsIndex_TagQueryParamPassedThrough(t *testing.T) {
+	var gotParams database.ListPostsFilteredParams
+
+	mockDB := &mocks.MockQuerier{
+		ListPostsFilteredFunc: func(ctx context.Context, arg database.ListPostsFilteredParams) ([]database.ListPostsFilteredRow, error) {
+			gotParams = arg
+			return []database.ListPostsFilteredRow{}, nil
+		},
+		ListDistinctTagsFunc: func(ctx context.Context) ([]string, error) { return nil, nil },
+	}
+
+	app := newTestApplicationWithDB(mockDB)
+
+	ts := httptest.NewServer(app.routes())
+	defer ts.Close()
+
+	rs, err := http.Get(ts.URL + "/posts?tag=go")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer rs.Body.Close()
+
+	assert.Equal(t, rs.StatusCode, http.StatusOK)
+	assert.Equal(t, gotParams.Tag.Valid, true)
+	assert.Equal(t, gotParams.Tag.String, "go")
+}
+
+func TestPostsIndex_NoTagQueryParamLeavesTagUnset(t *testing.T) {
+	var gotParams database.ListPostsFilteredParams
+
+	mockDB := &mocks.MockQuerier{
+		ListPostsFilteredFunc: func(ctx context.Context, arg database.ListPostsFilteredParams) ([]database.ListPostsFilteredRow, error) {
+			gotParams = arg
+			return []database.ListPostsFilteredRow{}, nil
+		},
+		ListDistinctTagsFunc: func(ctx context.Context) ([]string, error) { return nil, nil },
+	}
+
+	app := newTestApplicationWithDB(mockDB)
+
+	ts := httptest.NewServer(app.routes())
+	defer ts.Close()
+
+	rs, err := http.Get(ts.URL + "/posts")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer rs.Body.Close()
+
+	assert.Equal(t, rs.StatusCode, http.StatusOK)
+	assert.Equal(t, gotParams.Tag.Valid, false)
+}
+
+func TestPostsIndex_ShowsAllDistinctTagsAsLinks(t *testing.T) {
+	mockDB := &mocks.MockQuerier{
+		ListPostsFilteredFunc: func(ctx context.Context, arg database.ListPostsFilteredParams) ([]database.ListPostsFilteredRow, error) {
+			return []database.ListPostsFilteredRow{}, nil
+		},
+		ListDistinctTagsFunc: func(ctx context.Context) ([]string, error) {
+			return []string{"go", "homelab", "postgres"}, nil
+		},
+	}
+
+	app := newTestApplicationWithDB(mockDB)
+
+	ts := httptest.NewServer(app.routes())
+	defer ts.Close()
+
+	rs, err := http.Get(ts.URL + "/posts")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer rs.Body.Close()
+
+	body, err := io.ReadAll(rs.Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	html := string(body)
+	assert.StringContains(t, html, `href="/posts?tag=go"`)
+	assert.StringContains(t, html, `href="/posts?tag=homelab"`)
+	assert.StringContains(t, html, `href="/posts?tag=postgres"`)
 }

@@ -4,6 +4,7 @@ import (
 	"strconv"
 
 	"github.com/jonathanschwarzhaupt/my-blog/internal/models"
+	"github.com/jonathanschwarzhaupt/my-blog/ui/templ/components/badge"
 	"github.com/jonathanschwarzhaupt/my-blog/ui/templ/components/button"
 	"github.com/jonathanschwarzhaupt/my-blog/ui/templ/components/input"
 	"github.com/jonathanschwarzhaupt/my-blog/ui/templ/components/label"
@@ -11,12 +12,29 @@ import (
 	"github.com/jonathanschwarzhaupt/my-blog/ui/templ/layout"
 )
 
-templ PostsIndex(posts []models.Post, filters PostFilters, totalPages int) {
+templ PostsIndex(posts []models.Post, filters PostFilters, totalPages int, allTags []string) {
 	@layout.Base("Posts", "") {
 		<h1 class="mb-6 text-2xl font-semibold tracking-tight">Posts</h1>
+		if len(allTags) > 0 {
+			<div class="mb-4 flex flex-wrap items-center gap-2">
+				for _, tag := range allTags {
+					<a href={ templ.URL(filters.TagLink(tag)) }>
+						@badge.Badge(badge.Props{Variant: utils.IfElse(filters.Tag == tag, badge.VariantDefault, badge.VariantSecondary)}) {
+							{ tag }
+						}
+					</a>
+				}
+				if filters.Tag != "" {
+					<a href={ templ.URL(filters.TagLink("")) } class="text-sm text-muted-foreground hover:underline">Clear tag</a>
+				}
+			</div>
+		}
 		<form method="GET" action="/posts" class="mb-4 flex flex-wrap items-end gap-3">
 			if filters.Sort == "oldest" {
 				<input type="hidden" name="sort" value="oldest"/>
+			}
+			if filters.Tag != "" {
+				<input type="hidden" name="tag" value={ filters.Tag }/>
 			}
 			<div class="flex flex-col gap-1.5">
 				@label.Label(label.Props{For: "from"}) {

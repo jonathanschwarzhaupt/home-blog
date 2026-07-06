@@ -80,6 +80,30 @@ func (q *Queries) InsertPost(ctx context.Context, arg InsertPostParams) (Post, e
 	return i, err
 }
 
+const listDistinctTags = `-- name: ListDistinctTags :many
+SELECT DISTINCT unnest(tags)::text AS tag FROM posts ORDER BY 1
+`
+
+func (q *Queries) ListDistinctTags(ctx context.Context) ([]string, error) {
+	rows, err := q.db.Query(ctx, listDistinctTags)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []string
+	for rows.Next() {
+		var tag string
+		if err := rows.Scan(&tag); err != nil {
+			return nil, err
+		}
+		items = append(items, tag)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listFeaturedPosts = `-- name: ListFeaturedPosts :many
 SELECT id, title, slug, body, so_what, tags, version, published_at, featured_rank FROM posts WHERE featured_rank IS NOT NULL ORDER BY featured_rank ASC
 `
@@ -152,16 +176,18 @@ const listPostsFiltered = `-- name: ListPostsFiltered :many
 SELECT id, title, slug, body, so_what, tags, version, published_at, featured_rank, count(*) OVER() AS total_count FROM posts
 WHERE ($1::timestamptz IS NULL OR published_at >= $1)
   AND ($2::timestamptz IS NULL OR published_at <= $2)
+  AND ($3::text IS NULL OR $3::text = ANY(tags))
 ORDER BY
-  CASE WHEN $3::bool THEN published_at END ASC,
-  CASE WHEN NOT $3::bool THEN published_at END DESC,
+  CASE WHEN $4::bool THEN published_at END ASC,
+  CASE WHEN NOT $4::bool THEN published_at END DESC,
   id ASC
-LIMIT $5 OFFSET $4
+LIMIT $6 OFFSET $5
 `
 
 type ListPostsFilteredParams struct {
 	FromDate   pgtype.Timestamptz
 	ToDate     pgtype.Timestamptz
+	Tag        pgtype.Text
 	SortOldest bool
 	PageOffset int32
 	PageLimit  int32
@@ -184,6 +210,7 @@ func (q *Queries) ListPostsFiltered(ctx context.Context, arg ListPostsFilteredPa
 	rows, err := q.db.Query(ctx, listPostsFiltered,
 		arg.FromDate,
 		arg.ToDate,
+		arg.Tag,
 		arg.SortOldest,
 		arg.PageOffset,
 		arg.PageLimit,

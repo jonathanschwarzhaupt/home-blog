@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/jackc/pgx/v5/pgtype"
+
 	"github.com/jonathanschwarzhaupt/my-blog/internal/database"
 	"github.com/jonathanschwarzhaupt/my-blog/internal/models"
 	"github.com/jonathanschwarzhaupt/my-blog/ui/templ/pages/blog"
@@ -22,13 +24,25 @@ func (app *application) postsIndex(w http.ResponseWriter, r *http.Request) {
 	fromDate, _ := parseOptionalDate(filters.From)
 	toDate, _ := parseOptionalDate(filters.To)
 
+	var tag pgtype.Text
+	if filters.Tag != "" {
+		tag = pgtype.Text{String: filters.Tag, Valid: true}
+	}
+
 	rows, err := app.db.ListPostsFiltered(ctx, database.ListPostsFilteredParams{
 		FromDate:   fromDate,
 		ToDate:     toDate,
+		Tag:        tag,
 		SortOldest: filters.Sort == "oldest",
 		PageLimit:  blog.PostsPerPage,
 		PageOffset: int32((filters.Page - 1) * blog.PostsPerPage),
 	})
+	if err != nil {
+		app.serverError(w, r, models.WrapDBError(err))
+		return
+	}
+
+	allTags, err := app.db.ListDistinctTags(ctx)
 	if err != nil {
 		app.serverError(w, r, models.WrapDBError(err))
 		return
@@ -55,5 +69,5 @@ func (app *application) postsIndex(w http.ResponseWriter, r *http.Request) {
 		totalPages = 1
 	}
 
-	app.render(w, r, http.StatusOK, blog.PostsIndex(posts, filters, totalPages))
+	app.render(w, r, http.StatusOK, blog.PostsIndex(posts, filters, totalPages, allTags))
 }

@@ -13,11 +13,15 @@ SELECT * FROM posts ORDER BY published_at DESC, id ASC;
 SELECT *, count(*) OVER() AS total_count FROM posts
 WHERE (sqlc.narg('from_date')::timestamptz IS NULL OR published_at >= sqlc.narg('from_date'))
   AND (sqlc.narg('to_date')::timestamptz IS NULL OR published_at <= sqlc.narg('to_date'))
+  AND (sqlc.narg('tag')::text IS NULL OR sqlc.narg('tag')::text = ANY(tags))
 ORDER BY
   CASE WHEN sqlc.arg('sort_oldest')::bool THEN published_at END ASC,
   CASE WHEN NOT sqlc.arg('sort_oldest')::bool THEN published_at END DESC,
   id ASC
 LIMIT sqlc.arg('page_limit') OFFSET sqlc.arg('page_offset');
+
+-- name: ListDistinctTags :many
+SELECT DISTINCT unnest(tags)::text AS tag FROM posts ORDER BY 1;
 
 -- name: UpdatePost :one
 UPDATE posts
