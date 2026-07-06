@@ -30,7 +30,7 @@ func (q *Queries) DeletePostProjects(ctx context.Context, postID int64) error {
 }
 
 const getProjectBySlug = `-- name: GetProjectBySlug :one
-SELECT id, name, slug, description, featured_rank FROM projects WHERE slug = $1
+SELECT id, name, slug, description, featured_rank, created_at FROM projects WHERE slug = $1
 `
 
 func (q *Queries) GetProjectBySlug(ctx context.Context, slug string) (Project, error) {
@@ -42,12 +42,13 @@ func (q *Queries) GetProjectBySlug(ctx context.Context, slug string) (Project, e
 		&i.Slug,
 		&i.Description,
 		&i.FeaturedRank,
+		&i.CreatedAt,
 	)
 	return i, err
 }
 
 const getProjectsByIDs = `-- name: GetProjectsByIDs :many
-SELECT id, name, slug, description, featured_rank FROM projects WHERE id = ANY($1::bigint[])
+SELECT id, name, slug, description, featured_rank, created_at FROM projects WHERE id = ANY($1::bigint[])
 `
 
 func (q *Queries) GetProjectsByIDs(ctx context.Context, ids []int64) ([]Project, error) {
@@ -65,6 +66,7 @@ func (q *Queries) GetProjectsByIDs(ctx context.Context, ids []int64) ([]Project,
 			&i.Slug,
 			&i.Description,
 			&i.FeaturedRank,
+			&i.CreatedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -77,7 +79,7 @@ func (q *Queries) GetProjectsByIDs(ctx context.Context, ids []int64) ([]Project,
 }
 
 const getProjectsForPost = `-- name: GetProjectsForPost :many
-SELECT projects.id, projects.name, projects.slug, projects.description, projects.featured_rank FROM projects
+SELECT projects.id, projects.name, projects.slug, projects.description, projects.featured_rank, projects.created_at FROM projects
 JOIN post_projects ON post_projects.project_id = projects.id
 WHERE post_projects.post_id = $1
 ORDER BY projects.name ASC
@@ -98,6 +100,7 @@ func (q *Queries) GetProjectsForPost(ctx context.Context, postID int64) ([]Proje
 			&i.Slug,
 			&i.Description,
 			&i.FeaturedRank,
+			&i.CreatedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -126,7 +129,7 @@ func (q *Queries) InsertPostProject(ctx context.Context, arg InsertPostProjectPa
 const insertProject = `-- name: InsertProject :one
 INSERT INTO projects (name, slug, description)
 VALUES ($1, $2, $3)
-RETURNING id, name, slug, description, featured_rank
+RETURNING id, name, slug, description, featured_rank, created_at
 `
 
 type InsertProjectParams struct {
@@ -144,12 +147,13 @@ func (q *Queries) InsertProject(ctx context.Context, arg InsertProjectParams) (P
 		&i.Slug,
 		&i.Description,
 		&i.FeaturedRank,
+		&i.CreatedAt,
 	)
 	return i, err
 }
 
 const listFeaturedProjects = `-- name: ListFeaturedProjects :many
-SELECT id, name, slug, description, featured_rank FROM projects WHERE featured_rank IS NOT NULL ORDER BY featured_rank ASC
+SELECT id, name, slug, description, featured_rank, created_at FROM projects WHERE featured_rank IS NOT NULL ORDER BY featured_rank ASC
 `
 
 func (q *Queries) ListFeaturedProjects(ctx context.Context) ([]Project, error) {
@@ -167,6 +171,7 @@ func (q *Queries) ListFeaturedProjects(ctx context.Context) ([]Project, error) {
 			&i.Slug,
 			&i.Description,
 			&i.FeaturedRank,
+			&i.CreatedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -217,7 +222,7 @@ func (q *Queries) ListPostsByProjectSlug(ctx context.Context, slug string) ([]Po
 }
 
 const listProjects = `-- name: ListProjects :many
-SELECT id, name, slug, description, featured_rank FROM projects ORDER BY name ASC
+SELECT id, name, slug, description, featured_rank, created_at FROM projects ORDER BY name ASC
 `
 
 func (q *Queries) ListProjects(ctx context.Context) ([]Project, error) {
@@ -235,6 +240,7 @@ func (q *Queries) ListProjects(ctx context.Context) ([]Project, error) {
 			&i.Slug,
 			&i.Description,
 			&i.FeaturedRank,
+			&i.CreatedAt,
 		); err != nil {
 			return nil, err
 		}

@@ -145,3 +145,26 @@ func TestListFeaturedPosts_OrdersByRankAndExcludesUnfeatured(t *testing.T) {
 	assert.Equal(t, featured[0].ID, ids[1])
 	assert.Equal(t, featured[1].ID, ids[0])
 }
+
+func TestListProjects_CreatedAtIsPopulated(t *testing.T) {
+	pool := realTestPool(t)
+	ctx := t.Context()
+	q := database.New(pool)
+
+	projects, err := q.ListProjects(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(projects) == 0 {
+		t.Skip("no projects in the database to test against")
+	}
+
+	for _, p := range projects {
+		if !p.CreatedAt.Valid {
+			t.Fatalf("project %d (%s) has an invalid CreatedAt", p.ID, p.Name)
+		}
+		if p.CreatedAt.Time.IsZero() {
+			t.Fatalf("project %d (%s) has a zero CreatedAt", p.ID, p.Name)
+		}
+	}
+}

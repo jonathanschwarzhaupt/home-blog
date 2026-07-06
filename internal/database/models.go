@@ -31,6 +31,7 @@ type Project struct {
 	Slug         string
 	Description  string
 	FeaturedRank pgtype.Int4
+	CreatedAt    pgtype.Timestamptz
 }
 
 type Session struct {

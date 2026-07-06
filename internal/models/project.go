@@ -1,6 +1,8 @@
 package models
 
 import (
+	"time"
+
 	"github.com/jonathanschwarzhaupt/my-blog/internal/database"
 )
 
@@ -9,6 +11,7 @@ type Project struct {
 	Name        string
 	Slug        string
 	Description string
+	CreatedAt   time.Time
 }
 
 func ProjectFromDatabase(p database.Project) Project {
@@ -17,5 +20,6 @@ func ProjectFromDatabase(p database.Project) Project {
 		Name:        p.Name,
 		Slug:        p.Slug,
 		Description: p.Description,
+		CreatedAt:   p.CreatedAt.Time,
 	}
 }
