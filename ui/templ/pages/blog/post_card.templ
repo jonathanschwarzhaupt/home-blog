@@ -23,7 +23,7 @@ templ PostCard(post models.Post) {
 			// consistent whether or not a Post has tags.
 			Class: utils.IfElse(len(post.Tags) == 0, "pb-6", ""),
 		}) {
-			@card.Title() {
+			@card.Title(card.TitleProps{Class: "font-mono"}) {
 				<a href={ templ.URL("/posts/" + post.Slug) } class="hover:underline">{ post.Title }</a>
 			}
 			@card.Description() {

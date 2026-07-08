@@ -51,7 +51,7 @@ func EasterEggQuip() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</button><div class=\"pointer-events-none absolute bottom-full left-1/2 mb-2 w-max max-w-64 -translate-x-1/2 rounded-md border bg-popover px-3 py-2 text-popover-foreground opacity-0 shadow-lg transition-opacity group-hover/quip:opacity-100 group-focus-within/quip:opacity-100\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</button><div class=\"pointer-events-none absolute bottom-full left-1/2 mb-2 w-max max-w-64 -translate-x-1/2 rounded-md border bg-popover px-3 py-2 font-mono text-xs text-popover-foreground opacity-0 shadow-lg transition-opacity group-hover/quip:opacity-100 group-focus-within/quip:opacity-100\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

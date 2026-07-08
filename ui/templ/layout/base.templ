@@ -13,13 +13,19 @@ templ Base(title string, flash string) {
 		</head>
 		<body class="min-h-screen bg-background text-foreground antialiased">
 			<header class="border-b border-border">
-				<nav class="mx-auto flex max-w-3xl flex-wrap items-center gap-x-6 gap-y-2 px-4 py-4 text-sm font-medium">
-					<a href="/" class="text-muted-foreground transition-colors hover:text-primary">Home</a>
-					<a href="/posts" class="text-muted-foreground transition-colors hover:text-primary">Posts</a>
-					<a href="/projects" class="text-muted-foreground transition-colors hover:text-primary">Projects</a>
-					<a href="/about" class="text-muted-foreground transition-colors hover:text-primary">About</a>
+				<!--
+					Nav links hover to accent-secondary (mustard), not primary like
+					every other hover state on the site (ADR-0005) — there's no
+					active-page detection here, so hover is the closest real analogue
+					to the "nav active state" the ADR describes.
+				-->
+				<nav class="mx-auto flex max-w-3xl flex-wrap items-center gap-x-6 gap-y-2 px-4 py-4 font-mono text-xs font-medium tracking-wide uppercase">
+					<a href="/" class="text-muted-foreground transition-colors hover:text-accent-secondary">Home</a>
+					<a href="/posts" class="text-muted-foreground transition-colors hover:text-accent-secondary">Posts</a>
+					<a href="/projects" class="text-muted-foreground transition-colors hover:text-accent-secondary">Projects</a>
+					<a href="/about" class="text-muted-foreground transition-colors hover:text-accent-secondary">About</a>
 					if Features.Admin {
-						<a href="/admin" class="text-muted-foreground transition-colors hover:text-primary sm:ml-auto">Admin</a>
+						<a href="/admin" class="text-muted-foreground transition-colors hover:text-accent-secondary sm:ml-auto">Admin</a>
 					}
 				</nav>
 			</header>
@@ -31,7 +37,7 @@ templ Base(title string, flash string) {
 			<main class="mx-auto max-w-3xl px-4 py-8">
 				{ children... }
 			</main>
-			<footer class="mx-auto max-w-3xl space-y-3 px-4 py-6 text-center text-xs text-muted-foreground/70">
+			<footer class="mx-auto max-w-3xl space-y-3 border-t-2 border-double border-border px-4 py-6 text-center text-xs text-muted-foreground/70">
 				@FooterLinks()
 				@StayConnected()
 				@EasterEggQuip()

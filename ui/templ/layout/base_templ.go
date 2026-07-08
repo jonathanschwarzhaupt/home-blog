@@ -42,12 +42,12 @@ func Base(title string, flash string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</title><link rel=\"stylesheet\" href=\"/static/css/main.css\"><link rel=\"icon\" type=\"image/svg+xml\" href=\"/static/favicon.svg\"><link rel=\"alternate\" type=\"application/rss+xml\" title=\"RSS feed\" href=\"/feed.xml\"></head><body class=\"min-h-screen bg-background text-foreground antialiased\"><header class=\"border-b border-border\"><nav class=\"mx-auto flex max-w-3xl flex-wrap items-center gap-x-6 gap-y-2 px-4 py-4 text-sm font-medium\"><a href=\"/\" class=\"text-muted-foreground transition-colors hover:text-primary\">Home</a> <a href=\"/posts\" class=\"text-muted-foreground transition-colors hover:text-primary\">Posts</a> <a href=\"/projects\" class=\"text-muted-foreground transition-colors hover:text-primary\">Projects</a> <a href=\"/about\" class=\"text-muted-foreground transition-colors hover:text-primary\">About</a> ")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</title><link rel=\"stylesheet\" href=\"/static/css/main.css\"><link rel=\"icon\" type=\"image/svg+xml\" href=\"/static/favicon.svg\"><link rel=\"alternate\" type=\"application/rss+xml\" title=\"RSS feed\" href=\"/feed.xml\"></head><body class=\"min-h-screen bg-background text-foreground antialiased\"><header class=\"border-b border-border\"><!--\n\t\t\t\t\tNav links hover to accent-secondary (mustard), not primary like\n\t\t\t\t\tevery other hover state on the site (ADR-0005) — there's no\n\t\t\t\t\tactive-page detection here, so hover is the closest real analogue\n\t\t\t\t\tto the \"nav active state\" the ADR describes.\n\t\t\t\t--><nav class=\"mx-auto flex max-w-3xl flex-wrap items-center gap-x-6 gap-y-2 px-4 py-4 font-mono text-xs font-medium tracking-wide uppercase\"><a href=\"/\" class=\"text-muted-foreground transition-colors hover:text-accent-secondary\">Home</a> <a href=\"/posts\" class=\"text-muted-foreground transition-colors hover:text-accent-secondary\">Posts</a> <a href=\"/projects\" class=\"text-muted-foreground transition-colors hover:text-accent-secondary\">Projects</a> <a href=\"/about\" class=\"text-muted-foreground transition-colors hover:text-accent-secondary\">About</a> ")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if Features.Admin {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<a href=\"/admin\" class=\"text-muted-foreground transition-colors hover:text-primary sm:ml-auto\">Admin</a>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<a href=\"/admin\" class=\"text-muted-foreground transition-colors hover:text-accent-secondary sm:ml-auto\">Admin</a>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -64,7 +64,7 @@ func Base(title string, flash string) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(flash)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `ui/templ/layout/base.templ`, Line: 28, Col: 105}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `ui/templ/layout/base.templ`, Line: 34, Col: 105}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -83,7 +83,7 @@ func Base(title string, flash string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "</main><footer class=\"mx-auto max-w-3xl space-y-3 px-4 py-6 text-center text-xs text-muted-foreground/70\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "</main><footer class=\"mx-auto max-w-3xl space-y-3 border-t-2 border-double border-border px-4 py-6 text-center text-xs text-muted-foreground/70\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

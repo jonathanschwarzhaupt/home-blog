@@ -6,8 +6,26 @@
  * the missed utility classes from the compiled output, no build error. */
 @source "../templ";
 
+/*
+ * JetBrains Mono, self-hosted (OFL-licensed, see ui/static/fonts/JetBrainsMono-OFL.txt).
+ * Single variable-font file covers the whole weight range, so one @font-face
+ * with a font-weight range serves both 400 and 700 — this is the same trick
+ * Google Fonts' own CSS uses for variable-capable families. Latin-only
+ * unicode-range (subset boundaries taken directly from Google's own split)
+ * keeps the file small since this blog has no non-Latin content.
+ */
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 100 800;
+  font-display: swap;
+  src: url("/static/fonts/jetbrains-mono-latin-variable.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
 @theme inline {
   --font-sans: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -26,6 +44,7 @@
   --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
+  --color-accent-secondary: var(--accent-secondary);
   --color-destructive: var(--destructive);
   --color-border: var(--border);
   --color-input: var(--input);
@@ -33,30 +52,34 @@
 }
 
 /*
- * Single accent theme (templui's built-in "blue" palette) — no dark mode,
- * no theme switching. Swapping the accent later is a one-line change here,
- * not a template rewrite.
+ * Personality theme (ADR 0005): warm paper + ink, a red-orange primary and a
+ * mustard secondary accent, both sourced from PostHog's and MotherDuck's
+ * actual compiled CSS rather than picked off a hue wheel. Still a single,
+ * static theme — no dark mode/switching shipped yet — but every value stays
+ * a semantic custom property so a future dark variant is a values-only
+ * addition here, not a template rewrite.
  */
 :root {
   --radius: 0.65rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.141 0.005 285.823);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.141 0.005 285.823);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.141 0.005 285.823);
-  --primary: oklch(54.6% 0.245 262.881);
-  --primary-foreground: oklch(0.97 0.014 254.604);
-  --secondary: oklch(0.967 0.001 286.375);
-  --secondary-foreground: oklch(0.21 0.006 285.885);
-  --muted: oklch(0.967 0.001 286.375);
-  --muted-foreground: oklch(0.552 0.016 285.938);
-  --accent: oklch(0.967 0.001 286.375);
-  --accent-foreground: oklch(0.21 0.006 285.885);
+  --background: #F4EFEA;
+  --foreground: #1d1f27;
+  --card: #F4EFEA;
+  --card-foreground: #1d1f27;
+  --popover: #F4EFEA;
+  --popover-foreground: #1d1f27;
+  --primary: #f54e00;
+  --primary-foreground: #F4EFEA;
+  --secondary: #b0a89e;
+  --secondary-foreground: #1d1f27;
+  --muted: #e7e0d6;
+  --muted-foreground: #7a7a72;
+  --accent: #e7e0d6;
+  --accent-foreground: #1d1f27;
+  --accent-secondary: #f7a501;
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.92 0.004 286.32);
-  --input: oklch(0.92 0.004 286.32);
-  --ring: oklch(0.623 0.214 259.815);
+  --border: #b0a89e;
+  --input: #b0a89e;
+  --ring: #f54e00;
 }
 
 @layer base {
