@@ -6,6 +6,9 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
+
+	"github.com/jackc/pgx/v5/pgtype"
 
 	"github.com/jonathanschwarzhaupt/my-blog/internal/assert"
 	"github.com/jonathanschwarzhaupt/my-blog/internal/database"
@@ -46,6 +49,53 @@ func TestPostsIndex_ListsAllPosts(t *testing.T) {
 	assert.StringContains(t, html, "Second Post")
 	assert.StringContains(t, html, `href="/posts/first-post"`)
 	assert.StringContains(t, html, `href="/posts/second-post"`)
+}
+
+func TestPostsIndex_ShowsPublishedDateOnEachCard(t *testing.T) {
+	mockDB := &mocks.MockQuerier{
+		ListPostsFilteredFunc: func(ctx context.Context, arg database.ListPostsFilteredParams) ([]database.ListPostsFilteredRow, error) {
+			return []database.ListPostsFilteredRow{
+				{
+					ID:          1,
+					Title:       "Tagged Post",
+					Slug:        "tagged-post",
+					SoWhat:      "It's got tags.",
+					Tags:        []string{"go"},
+					PublishedAt: pgtype.Timestamptz{Time: time.Date(2026, time.January, 22, 0, 0, 0, 0, time.UTC), Valid: true},
+					TotalCount:  2,
+				},
+				{
+					ID:          2,
+					Title:       "Untagged Post",
+					Slug:        "untagged-post",
+					SoWhat:      "No tags here.",
+					PublishedAt: pgtype.Timestamptz{Time: time.Date(2026, time.February, 3, 0, 0, 0, 0, time.UTC), Valid: true},
+					TotalCount:  2,
+				},
+			}, nil
+		},
+		ListDistinctTagsFunc: func(ctx context.Context) ([]string, error) { return nil, nil },
+	}
+
+	app := newTestApplicationWithDB(mockDB)
+
+	ts := httptest.NewServer(app.routes())
+	defer ts.Close()
+
+	rs, err := http.Get(ts.URL + "/posts")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer rs.Body.Close()
+
+	body, err := io.ReadAll(rs.Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	html := string(body)
+	assert.StringContains(t, html, "2026-01-22")
+	assert.StringContains(t, html, "2026-02-03")
 }
 
 func TestPostsIndex_NoPosts(t *testing.T) {

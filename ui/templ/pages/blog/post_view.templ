@@ -2,7 +2,6 @@ package blog
 
 import (
 	"github.com/jonathanschwarzhaupt/my-blog/internal/models"
-	"github.com/jonathanschwarzhaupt/my-blog/ui/templ/components/badge"
 	"github.com/jonathanschwarzhaupt/my-blog/ui/templ/components/button"
 	"github.com/jonathanschwarzhaupt/my-blog/ui/templ/components/dropdown"
 	"github.com/jonathanschwarzhaupt/my-blog/ui/templ/components/icon"
@@ -23,17 +22,9 @@ templ PostView(post models.Post, bodyHTML string) {
 				<p class="text-sm font-medium text-primary">So What</p>
 				<p class="mt-1 text-sm text-foreground">{ post.SoWhat }</p>
 			</div>
-			if len(post.Tags) > 0 {
-				<div class="mt-4 flex flex-wrap gap-2">
-					for _, tag := range post.Tags {
-						<a href={ templ.URL(TagFilterLink(tag)) }>
-							@badge.Badge(badge.Props{Variant: badge.VariantSecondary}) {
-								{ tag }
-							}
-						</a>
-					}
-				</div>
-			}
+			<div class="mt-4">
+				@postDateAndTags(post)
+			</div>
 			<!--
 				bodyHTML is post.Body already rendered from markdown
 				(internal/markdown, called by the handler) — safe to embed

@@ -1,0 +1,25 @@
+package blog
+
+import (
+	"github.com/jonathanschwarzhaupt/my-blog/internal/models"
+	"github.com/jonathanschwarzhaupt/my-blog/ui/templ/components/badge"
+)
+
+// postDateAndTags is the published-date-and-tags row shared by PostView and
+// PostCard — the date always renders (even with zero tags), the middot
+// separator only when there's at least one tag to separate it from.
+templ postDateAndTags(post models.Post) {
+	<div class="flex flex-wrap items-center gap-2">
+		<span class="font-mono text-xs text-muted-foreground">{ FormatPostDate(post.PublishedAt) }</span>
+		if len(post.Tags) > 0 {
+			<span class="text-muted-foreground/50">&middot;</span>
+		}
+		for _, tag := range post.Tags {
+			<a href={ templ.URL(TagFilterLink(tag)) }>
+				@badge.Badge(badge.Props{Variant: badge.VariantSecondary}) {
+					{ tag }
+				}
+			</a>
+		}
+	</div>
+}

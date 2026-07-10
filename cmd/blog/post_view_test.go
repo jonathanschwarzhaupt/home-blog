@@ -62,6 +62,76 @@ func TestPostView_RendersPost(t *testing.T) {
 	assert.StringContains(t, html, "blog")
 }
 
+func TestPostView_ShowsPublishedDateNextToTags(t *testing.T) {
+	mockDB := &mocks.MockQuerier{
+		GetPostFunc: func(ctx context.Context, slug string) (database.Post, error) {
+			return database.Post{
+				ID:          1,
+				Title:       "Hello World",
+				Slug:        "hello-world",
+				Body:        "Body",
+				SoWhat:      "So what",
+				Tags:        []string{"go", "blog"},
+				Version:     1,
+				PublishedAt: pgtype.Timestamptz{Time: time.Date(2026, time.January, 22, 0, 0, 0, 0, time.UTC), Valid: true},
+			}, nil
+		},
+	}
+
+	app := newTestApplicationWithDB(mockDB)
+
+	ts := httptest.NewServer(app.routes())
+	defer ts.Close()
+
+	rs, err := http.Get(ts.URL + "/posts/hello-world")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer rs.Body.Close()
+
+	body, err := io.ReadAll(rs.Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	assert.StringContains(t, string(body), "2026-01-22")
+}
+
+func TestPostView_ShowsPublishedDateEvenWithNoTags(t *testing.T) {
+	mockDB := &mocks.MockQuerier{
+		GetPostFunc: func(ctx context.Context, slug string) (database.Post, error) {
+			return database.Post{
+				ID:          1,
+				Title:       "Hello World",
+				Slug:        "hello-world",
+				Body:        "Body",
+				SoWhat:      "So what",
+				Tags:        []string{},
+				Version:     1,
+				PublishedAt: pgtype.Timestamptz{Time: time.Date(2026, time.January, 22, 0, 0, 0, 0, time.UTC), Valid: true},
+			}, nil
+		},
+	}
+
+	app := newTestApplicationWithDB(mockDB)
+
+	ts := httptest.NewServer(app.routes())
+	defer ts.Close()
+
+	rs, err := http.Get(ts.URL + "/posts/hello-world")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer rs.Body.Close()
+
+	body, err := io.ReadAll(rs.Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	assert.StringContains(t, string(body), "2026-01-22")
+}
+
 func TestPostView_RendersMarkdownBody(t *testing.T) {
 	mockDB := &mocks.MockQuerier{
 		GetPostFunc: func(ctx context.Context, slug string) (database.Post, error) {
