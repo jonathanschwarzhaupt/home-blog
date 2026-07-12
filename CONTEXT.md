@@ -1,4 +1,4 @@
-# my-blog
+# home-blog
 
 A personal blog and passive CV for Jonathan, built to make daily writing from a phone effortless while keeping the bar for "why does this matter" high.
 

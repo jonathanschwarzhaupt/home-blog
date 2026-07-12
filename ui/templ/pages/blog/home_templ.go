@@ -9,9 +9,9 @@ import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
 import (
-	"github.com/jonathanschwarzhaupt/my-blog/internal/models"
-	"github.com/jonathanschwarzhaupt/my-blog/ui/templ/components/button"
-	"github.com/jonathanschwarzhaupt/my-blog/ui/templ/layout"
+	"github.com/jonathanschwarzhaupt/home-blog/internal/models"
+	"github.com/jonathanschwarzhaupt/home-blog/ui/templ/components/button"
+	"github.com/jonathanschwarzhaupt/home-blog/ui/templ/layout"
 )
 
 func Home(featuredPosts []models.Post, featuredProjects []models.Project) templ.Component {

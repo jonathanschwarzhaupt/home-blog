@@ -9,13 +9,13 @@ import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
 import (
-	"github.com/jonathanschwarzhaupt/my-blog/internal/validator"
-	"github.com/jonathanschwarzhaupt/my-blog/ui/templ/components/alert"
-	"github.com/jonathanschwarzhaupt/my-blog/ui/templ/components/button"
-	"github.com/jonathanschwarzhaupt/my-blog/ui/templ/components/input"
-	"github.com/jonathanschwarzhaupt/my-blog/ui/templ/components/label"
-	"github.com/jonathanschwarzhaupt/my-blog/ui/templ/components/textarea"
-	"github.com/jonathanschwarzhaupt/my-blog/ui/templ/layout"
+	"github.com/jonathanschwarzhaupt/home-blog/internal/validator"
+	"github.com/jonathanschwarzhaupt/home-blog/ui/templ/components/alert"
+	"github.com/jonathanschwarzhaupt/home-blog/ui/templ/components/button"
+	"github.com/jonathanschwarzhaupt/home-blog/ui/templ/components/input"
+	"github.com/jonathanschwarzhaupt/home-blog/ui/templ/components/label"
+	"github.com/jonathanschwarzhaupt/home-blog/ui/templ/components/textarea"
+	"github.com/jonathanschwarzhaupt/home-blog/ui/templ/layout"
 )
 
 type ProjectForm struct {

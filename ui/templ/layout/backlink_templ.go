@@ -9,7 +9,7 @@ import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
 import (
-	"github.com/jonathanschwarzhaupt/my-blog/ui/templ/components/icon"
+	"github.com/jonathanschwarzhaupt/home-blog/ui/templ/components/icon"
 )
 
 // BackLink is a small, icon-only "back" affordance shared by admin pages

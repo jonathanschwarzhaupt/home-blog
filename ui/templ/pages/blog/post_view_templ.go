@@ -9,11 +9,11 @@ import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
 import (
-	"github.com/jonathanschwarzhaupt/my-blog/internal/models"
-	"github.com/jonathanschwarzhaupt/my-blog/ui/templ/components/button"
-	"github.com/jonathanschwarzhaupt/my-blog/ui/templ/components/dropdown"
-	"github.com/jonathanschwarzhaupt/my-blog/ui/templ/components/icon"
-	"github.com/jonathanschwarzhaupt/my-blog/ui/templ/layout"
+	"github.com/jonathanschwarzhaupt/home-blog/internal/models"
+	"github.com/jonathanschwarzhaupt/home-blog/ui/templ/components/button"
+	"github.com/jonathanschwarzhaupt/home-blog/ui/templ/components/dropdown"
+	"github.com/jonathanschwarzhaupt/home-blog/ui/templ/components/icon"
+	"github.com/jonathanschwarzhaupt/home-blog/ui/templ/layout"
 )
 
 func PostView(post models.Post, bodyHTML string) templ.Component {

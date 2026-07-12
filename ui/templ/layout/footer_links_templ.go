@@ -9,7 +9,7 @@ import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
 import (
-	"github.com/jonathanschwarzhaupt/my-blog/ui/templ/components/icon"
+	"github.com/jonathanschwarzhaupt/home-blog/ui/templ/components/icon"
 )
 
 // footerControlClass is the shared icon+label styling for every interactive

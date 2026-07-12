@@ -12,8 +12,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/jonathanschwarzhaupt/my-blog/internal/metrics"
-	"github.com/jonathanschwarzhaupt/my-blog/ui/templ/layout"
+	"github.com/jonathanschwarzhaupt/home-blog/internal/metrics"
+	"github.com/jonathanschwarzhaupt/home-blog/ui/templ/layout"
 )
 
 func Stats(stats metrics.Stats) templ.Component {

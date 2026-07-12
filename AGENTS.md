@@ -2,7 +2,7 @@
 
 ### Issue tracker
 
-Issues and PRDs live as GitHub issues in `jonathanschwarzhaupt/my-blog` (via the `gh` CLI); external PRs are not treated as a triage surface. See `docs/agents/issue-tracker.md`.
+Issues and PRDs live as GitHub issues in `jonathanschwarzhaupt/home-blog` (via the `gh` CLI); external PRs are not treated as a triage surface. See `docs/agents/issue-tracker.md`.
 
 ### Triage labels
 

@@ -9,8 +9,8 @@ import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
 import (
-	"github.com/jonathanschwarzhaupt/my-blog/internal/models"
-	"github.com/jonathanschwarzhaupt/my-blog/ui/templ/components/card"
+	"github.com/jonathanschwarzhaupt/home-blog/internal/models"
+	"github.com/jonathanschwarzhaupt/home-blog/ui/templ/components/card"
 )
 
 // ProjectCard is the reusable scannable-card treatment for a Project — used

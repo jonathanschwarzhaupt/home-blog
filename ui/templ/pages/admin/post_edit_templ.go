@@ -11,10 +11,10 @@ import templruntime "github.com/a-h/templ/runtime"
 import (
 	"strconv"
 
-	"github.com/jonathanschwarzhaupt/my-blog/internal/models"
-	"github.com/jonathanschwarzhaupt/my-blog/ui/templ/components/alert"
-	"github.com/jonathanschwarzhaupt/my-blog/ui/templ/components/button"
-	"github.com/jonathanschwarzhaupt/my-blog/ui/templ/layout"
+	"github.com/jonathanschwarzhaupt/home-blog/internal/models"
+	"github.com/jonathanschwarzhaupt/home-blog/ui/templ/components/alert"
+	"github.com/jonathanschwarzhaupt/home-blog/ui/templ/components/button"
+	"github.com/jonathanschwarzhaupt/home-blog/ui/templ/layout"
 )
 
 func PostEdit(form PostForm, slug string, allProjects []models.Project, flash string) templ.Component {

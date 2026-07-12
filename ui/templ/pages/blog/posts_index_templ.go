@@ -11,10 +11,10 @@ import templruntime "github.com/a-h/templ/runtime"
 import (
 	"strconv"
 
-	"github.com/jonathanschwarzhaupt/my-blog/internal/models"
-	"github.com/jonathanschwarzhaupt/my-blog/ui/templ/components/badge"
-	"github.com/jonathanschwarzhaupt/my-blog/ui/templ/components/utils"
-	"github.com/jonathanschwarzhaupt/my-blog/ui/templ/layout"
+	"github.com/jonathanschwarzhaupt/home-blog/internal/models"
+	"github.com/jonathanschwarzhaupt/home-blog/ui/templ/components/badge"
+	"github.com/jonathanschwarzhaupt/home-blog/ui/templ/components/utils"
+	"github.com/jonathanschwarzhaupt/home-blog/ui/templ/layout"
 )
 
 func PostsIndex(posts []models.Post, filters PostFilters, totalPages int, allTags []string) templ.Component {

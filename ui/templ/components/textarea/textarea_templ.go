@@ -13,7 +13,7 @@ import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
 import (
-	"github.com/jonathanschwarzhaupt/my-blog/ui/templ/components/utils"
+	"github.com/jonathanschwarzhaupt/home-blog/ui/templ/components/utils"
 	"strconv"
 )
 

@@ -9,7 +9,7 @@ import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
 import (
-	"github.com/jonathanschwarzhaupt/my-blog/ui/templ/components/icon"
+	"github.com/jonathanschwarzhaupt/home-blog/ui/templ/components/icon"
 )
 
 // EasterEggQuip is the footer's rotating quip (footerQuips/randomQuip, both
