@@ -1,0 +1,58 @@
+name: Migration Check
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+    branches: [development]
+    paths:
+      - "sql/schema/**"
+      - "cmd/migrate/**"
+
+jobs:
+  migration-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    # Plain repo secrets are readable by every workflow in the repo — there's
+    # no such thing as a repo secret scoped to one workflow file. A GitHub
+    # Environment is what actually gets that scoping: create one (e.g.
+    # "neon-preview") in repo Settings, attach NEON_API_KEY/NEON_PROJECT_ID
+    # to it there, not as plain repo secrets — only jobs that declare this
+    # same environment can read them.
+    environment: neon-preview
+    env:
+      NEON_BRANCH_NAME: preview/pr-${{ github.event.number }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Create ephemeral Neon branch
+        id: create-branch
+        uses: neondatabase/create-branch-action@v6
+        with:
+          project_id: ${{ secrets.NEON_PROJECT_ID }}
+          branch_name: ${{ env.NEON_BRANCH_NAME }}
+          api_key: ${{ secrets.NEON_API_KEY }}
+
+      # db_url (not db_url_pooled): PgBouncer's transaction-mode pooling
+      # (Neon's pooled endpoint) doesn't preserve session state across
+      # statements, which breaks goose's session-level advisory lock —
+      # goose needs a direct, unpooled connection to run migrations at all,
+      # independent of this project's separate (and differently-motivated)
+      # preference for direct connections in cmd/blog's long-running pool.
+      - name: Run migrations against the ephemeral branch
+        run: go run ./cmd/migrate -db-dsn="${{ steps.create-branch.outputs.db_url }}" up
+
+      # Only reached if the migration step above succeeded (the implicit
+      # default step condition) — a failed migration leaves this branch
+      # alive, on purpose, for post-mortem debugging, and fails the check.
+      - name: Delete ephemeral Neon branch
+        uses: neondatabase/delete-branch-action@v3
+        with:
+          project_id: ${{ secrets.NEON_PROJECT_ID }}
+          branch: ${{ env.NEON_BRANCH_NAME }}
+          api_key: ${{ secrets.NEON_API_KEY }}
