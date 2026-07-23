@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.2](https://github.com/jonathanschwarzhaupt/home-blog/compare/v0.3.1...v0.3.2) (2026-07-23)
+
+
+### Bug Fixes
+
+* update home page text ([47878bb](https://github.com/jonathanschwarzhaupt/home-blog/commit/47878bb1cc87b83d137ff9aee398d6e8c66f80f2))
+
 ## [0.3.1](https://github.com/jonathanschwarzhaupt/home-blog/compare/v0.3.0...v0.3.1) (2026-07-22)
 
 
