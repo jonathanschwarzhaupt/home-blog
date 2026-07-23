@@ -8,7 +8,7 @@ templ Base(title string, flash string) {
 			<meta name="viewport" content="width=device-width, initial-scale=1"/>
 			<title>{ title }</title>
 			<link rel="stylesheet" href="/static/css/main.css"/>
-			<link rel="icon" type="image/svg+xml" href="/static/favicon.svg"/>
+			<link rel="icon" type="image/png" href="/static/favicon.png"/>
 			<link rel="alternate" type="application/rss+xml" title="RSS feed" href="/feed.xml"/>
 		</head>
 		<body class="min-h-screen bg-background text-foreground antialiased">
@@ -20,7 +20,14 @@ templ Base(title string, flash string) {
 					to the "nav active state" the ADR describes.
 				-->
 				<nav class="mx-auto flex max-w-3xl flex-wrap items-center gap-x-6 gap-y-2 px-4 py-4 font-mono text-xs font-medium tracking-wide uppercase">
-					<a href="/" class="text-muted-foreground transition-colors hover:text-accent-secondary">Home</a>
+					<a href="/" class="opacity-90 transition-opacity hover:opacity-100">
+						<!--
+							favicon.png already has its own rounded-square shape baked in
+							(transparent corners around it), so no extra border-radius here
+							— that would just clip into the artwork's own corners.
+						-->
+						<img src="/static/favicon.png" alt="Home" width="24" height="24" class="size-6"/>
+					</a>
 					<a href="/posts" class="text-muted-foreground transition-colors hover:text-accent-secondary">Posts</a>
 					<a href="/projects" class="text-muted-foreground transition-colors hover:text-accent-secondary">Projects</a>
 					<a href="/about" class="text-muted-foreground transition-colors hover:text-accent-secondary">About</a>
@@ -37,7 +44,23 @@ templ Base(title string, flash string) {
 			<main class="mx-auto max-w-3xl px-4 py-8">
 				{ children... }
 			</main>
-			<footer class="mx-auto max-w-3xl space-y-3 border-t-2 border-double border-border px-4 py-6 text-center text-xs text-muted-foreground/70">
+			<footer class="relative mx-auto max-w-3xl space-y-3 border-t-2 border-double border-border px-4 py-6 text-center text-xs text-muted-foreground/70">
+				<!--
+					Positioned so its bottom edge sits exactly on the footer's own
+					top border (bottom-full = bottom: 100% of this relatively
+					positioned footer, i.e. flush with the footer's top edge) — the
+					beaver appears to peek up over the real double-line rule, the
+					same composition as the source illustration itself. right-4
+					matches the footer's own px-4 padding rather than sitting flush
+					against the container edge.
+				-->
+				<img
+					src="/static/images/beaver-lodge.png"
+					alt=""
+					width="400"
+					height="175"
+					class="absolute right-4 bottom-full w-36 select-none"
+				/>
 				@FooterLinks()
 				@StayConnected()
 				@EasterEggQuip()
