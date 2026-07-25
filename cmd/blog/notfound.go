@@ -41,6 +41,16 @@ type notFoundInterceptor struct {
 func (r *notFoundInterceptor) WriteHeader(status int) {
 	if status == http.StatusNotFound {
 		r.is404 = true
+		// Both app.notFound/clientError and the stdlib mux's own default 404
+		// go through net/http.Error, which sets these two headers on the
+		// real underlying ResponseWriter before calling WriteHeader (Header()
+		// isn't wrapped, so that Set lands directly on it). Left in place,
+		// they'd survive into the styled replacement response written by
+		// app.render below, mislabeling its real HTML body as
+		// text/plain — the browser would then show the raw markup instead
+		// of rendering it.
+		r.Header().Del("Content-Type")
+		r.Header().Del("X-Content-Type-Options")
 		return
 	}
 	r.ResponseWriter.WriteHeader(status)
