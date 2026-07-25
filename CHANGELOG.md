@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.4.1](https://github.com/jonathanschwarzhaupt/home-blog/compare/v0.4.0...v0.4.1) (2026-07-25)
+
+
+### Bug Fixes
+
+* **ci:** point rc-image's version dry-run at the PR branch, not main ([#89](https://github.com/jonathanschwarzhaupt/home-blog/issues/89)) ([e768708](https://github.com/jonathanschwarzhaupt/home-blog/commit/e7687089fd028d32d6af2f436cc17e21fb331af5))
+* stop styled 404 page from inheriting a stale text/plain Content-Type ([#88](https://github.com/jonathanschwarzhaupt/home-blog/issues/88)) ([18f2d62](https://github.com/jonathanschwarzhaupt/home-blog/commit/18f2d625809b86139361261d55081f1cd67558ce))
+
 ## [0.4.0](https://github.com/jonathanschwarzhaupt/home-blog/compare/v0.3.2...v0.4.0) (2026-07-24)
 
 
