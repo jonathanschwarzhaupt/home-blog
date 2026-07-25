@@ -58,13 +58,24 @@ jobs:
       # creating or updating anything (--dry-run) — no PR, no tag, no push.
       # This is purely a read against GitHub's API, independent of main's own
       # release-please bookkeeping (see .github/workflows/release.yml).
+      #
+      # --target-branch is this PR's own head branch, not main. release-please
+      # only ever looks at commits already pushed to GitHub for the named
+      # branch — it has no concept of "what if this PR were merged". Pointing
+      # it at main asks "what's the next version for what's already landed",
+      # which is a stale question for a still-open PR and returns zero
+      # commits (hence no title line to parse) whenever main happens to be
+      # fully caught up with its last release already — i.e. right after
+      # every real release, exactly when a PR is most likely to be the first
+      # one in. The PR's own branch always has the new commit(s) already
+      # pushed, so it's the only ref this dry-run can meaningfully ask about.
       - name: Compute next version
         id: version
         run: |
           title=$(npx --yes release-please release-pr \
             --repo-url="${{ github.repository }}" \
             --token="${{ secrets.GITHUB_TOKEN }}" \
-            --target-branch=main \
+            --target-branch="${{ github.head_ref }}" \
             --config-file=release-please-config.json \
             --manifest-file=.release-please-manifest.json \
             --dry-run | grep '^title:')
