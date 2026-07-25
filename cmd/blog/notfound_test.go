@@ -55,6 +55,21 @@ func TestStyleNotFound_UpgradesUnmatchedRoutes(t *testing.T) {
 	assert.StringContains(t, string(body), "Back to Home")
 }
 
+func TestStyleNotFound_SetsHTMLContentType(t *testing.T) {
+	app := newTestApplication()
+
+	ts := httptest.NewServer(app.routes())
+	defer ts.Close()
+
+	rs, err := http.Get(ts.URL + "/this-path-does-not-exist")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer rs.Body.Close()
+
+	assert.StringContains(t, rs.Header.Get("Content-Type"), "text/html")
+}
+
 func TestStyleNotFound_LeavesOtherStatusesUntouched(t *testing.T) {
 	app := newTestApplication()
 
