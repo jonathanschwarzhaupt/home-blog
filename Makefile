@@ -16,11 +16,11 @@ run/blog-admin: addr ?= :4001
 
 .PHONY: run/blog
 run/blog: templ/generate css/build ## run blog (public mode by default; e.g. make run/blog features=admin addr=:4001)
-	go run ./cmd/blog -db-dsn=${BLOG_DB_DSN} -addr=${addr} -features=${features}
+	@go run ./cmd/blog -db-dsn=${BLOG_DB_DSN} -addr=${addr} -features=${features}
 
 .PHONY: run/blog-admin
 run/blog-admin: templ/generate css/build ## run blog in admin mode (shortcut for run/blog features=admin addr=:4001; override port: make run/blog-admin addr=:4002)
-	go run ./cmd/blog -db-dsn=${BLOG_DB_DSN} -addr=${addr} -features=admin
+	@go run ./cmd/blog -db-dsn=${BLOG_DB_DSN} -addr=${addr} -features=admin
 
 .PHONY: dev/blog
 dev/blog: ## run blog in public mode with hot reload (air)
@@ -44,15 +44,23 @@ css/watch: ## rebuild Tailwind CSS on file changes, for local development
 
 .PHONY: db/migrations/up
 db/migrations/up: confirm ## apply all up migrations
-	go run ./cmd/migrate -db-dsn=${BLOG_DB_DSN} up
+	@go run ./cmd/migrate -db-dsn=${BLOG_DB_DSN} up
 
 .PHONY: db/migrations/down
 db/migrations/down: confirm ## revert the most recently applied migration (goose down reverts one step, not all)
-	go run ./cmd/migrate -db-dsn=${BLOG_DB_DSN} down
+	@go run ./cmd/migrate -db-dsn=${BLOG_DB_DSN} down
 
 .PHONY: db/migrations/status
 db/migrations/status: ## show migration status
-	go run ./cmd/migrate -db-dsn=${BLOG_DB_DSN} status
+	@go run ./cmd/migrate -db-dsn=${BLOG_DB_DSN} status
+
+.PHONY: content/sync
+content/sync: confirm ## copy all projects/posts from BLOG_DB_DSN to a destination blog instance's admin API (make content/sync dest=https://blog.example.ts.net)
+	@go run ./cmd/content-sync -source-db-dsn=${BLOG_DB_DSN} -dest-url=${dest}
+
+.PHONY: content/sync/dry-run
+content/sync/dry-run: ## preview what content/sync would create, no requests made (make content/sync/dry-run dest=https://blog.example.ts.net)
+	@go run ./cmd/content-sync -source-db-dsn=${BLOG_DB_DSN} -dest-url=${dest} -dry-run
 
 .PHONY: sqlc/generate
 sqlc/generate: ## regenerate internal/database from sql/queries + sql/schema
