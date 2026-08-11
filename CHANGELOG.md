@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.2](https://github.com/jonathanschwarzhaupt/home-blog/compare/v0.4.1...v0.4.2) (2026-08-11)
+
+
+### Bug Fixes
+
+* not found page text ([#91](https://github.com/jonathanschwarzhaupt/home-blog/issues/91)) ([5bbe51e](https://github.com/jonathanschwarzhaupt/home-blog/commit/5bbe51e4f2ebef4264c81b88a5099a2b673d076f))
+
 ## [0.4.1](https://github.com/jonathanschwarzhaupt/home-blog/compare/v0.4.0...v0.4.1) (2026-07-25)
 
 
