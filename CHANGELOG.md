@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.0](https://github.com/jonathanschwarzhaupt/home-blog/compare/v0.4.2...v0.5.0) (2026-08-19)
+
+
+### Features
+
+* add umami privacy tracking ([#94](https://github.com/jonathanschwarzhaupt/home-blog/issues/94)) ([d000c4a](https://github.com/jonathanschwarzhaupt/home-blog/commit/d000c4aa0e6df753190a2af57ab2951824da7b30))
+
 ## [0.4.2](https://github.com/jonathanschwarzhaupt/home-blog/compare/v0.4.1...v0.4.2) (2026-08-11)
 
 
