@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.3](https://github.com/jonathanschwarzhaupt/home-blog/compare/v0.5.2...v0.5.3) (2026-08-20)
+
+
+### Bug Fixes
+
+* add umami gateway ([5e790a9](https://github.com/jonathanschwarzhaupt/home-blog/commit/5e790a9192aed5dcbf8b86efd574f01128d5ad13))
+
 ## [0.5.2](https://github.com/jonathanschwarzhaupt/home-blog/compare/v0.5.1...v0.5.2) (2026-08-20)
 
 
