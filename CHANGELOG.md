@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.1](https://github.com/jonathanschwarzhaupt/home-blog/compare/v0.5.0...v0.5.1) (2026-08-20)
+
+
+### Bug Fixes
+
+* add csp header for umami ([4e5789d](https://github.com/jonathanschwarzhaupt/home-blog/commit/4e5789d2f9e90b3c305a9b2912c199d9e03637b8))
+
 ## [0.5.0](https://github.com/jonathanschwarzhaupt/home-blog/compare/v0.4.2...v0.5.0) (2026-08-19)
 
 
