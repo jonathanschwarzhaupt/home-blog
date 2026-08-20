@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.2](https://github.com/jonathanschwarzhaupt/home-blog/compare/v0.5.1...v0.5.2) (2026-08-20)
+
+
+### Bug Fixes
+
+* typo ([d93ed87](https://github.com/jonathanschwarzhaupt/home-blog/commit/d93ed873e30d0fccc3fcba0cca93cd9a9fcec081))
+
 ## [0.5.1](https://github.com/jonathanschwarzhaupt/home-blog/compare/v0.5.0...v0.5.1) (2026-08-20)
 
 
